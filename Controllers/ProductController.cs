@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json;
 using QLBH.Models;
 
 namespace QLBH.Controllers
@@ -25,7 +26,7 @@ namespace QLBH.Controllers
                 products = products.Where(p => p.CategoryId == categoryId.Value);
             }
 
-            if (!string.IsNullOrEmpty(searchString))
+            if (!string.IsNullOrWhiteSpace(searchString))
             {
                 products = products.Where(p => p.Name.Contains(searchString));
             }
@@ -34,6 +35,7 @@ namespace QLBH.Controllers
             int totalPages = (int)Math.Ceiling((double)totalProducts / pageSize);
 
             var productList = await products
+                .OrderByDescending(p => p.Id)
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
                 .ToListAsync();
@@ -58,6 +60,7 @@ namespace QLBH.Controllers
             var product = await _context.Products
                 .Include(p => p.Category)
                 .FirstOrDefaultAsync(m => m.Id == id);
+
             if (product == null)
             {
                 return NotFound();
@@ -74,46 +77,27 @@ namespace QLBH.Controllers
         }
 
         // POST: Product/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(Product product, List<IFormFile> Images)
+        public async Task<IActionResult> Create(Product product, List<IFormFile>? Images, List<IFormFile>? NewImages)
         {
-            if (ModelState.IsValid)
+            if (!ModelState.IsValid)
             {
-                var imagePaths = new List<string>();
-                var uploadPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/images/products");
-                if (!Directory.Exists(uploadPath))
-                {
-                    Directory.CreateDirectory(uploadPath);
-                }
-
-                foreach (var file in Images)
-                {
-                    if (file.Length > 0)
-                    {
-                        var fileName = Guid.NewGuid().ToString() + Path.GetExtension(file.FileName);
-                        var filePath = Path.Combine(uploadPath, fileName);
-
-                        using (var stream = new FileStream(filePath, FileMode.Create))
-                        {
-                            await file.CopyToAsync(stream);
-                        }
-
-                        imagePaths.Add($"/images/products/{fileName}");
-                    }
-                }
-
-                product.Images = Newtonsoft.Json.JsonConvert.SerializeObject(imagePaths);
-
-                _context.Add(product);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
+                ViewData["CategoryId"] = new SelectList(_context.Categories, "Id", "Name", product.CategoryId);
+                return View(product);
             }
 
-            ViewData["CategoryId"] = new SelectList(_context.Categories, "Id", "Name", product.CategoryId);
-            return View(product);
+            var uploadedFiles = PickUploadedFiles(Images, NewImages);
+            var imagePaths = await SaveUploadedImagesAsync(uploadedFiles);
+
+            product.Images = imagePaths.Any()
+                ? JsonConvert.SerializeObject(imagePaths)
+                : "[]";
+
+            _context.Add(product);
+            await _context.SaveChangesAsync();
+
+            return RedirectToAction(nameof(Index));
         }
 
         // GET: Product/Edit/5
@@ -129,44 +113,75 @@ namespace QLBH.Controllers
             {
                 return NotFound();
             }
-            ViewData["CategoryId"] = new SelectList(_context.Categories, "Id", "Id", product.CategoryId);
+
+            ViewData["CategoryId"] = new SelectList(_context.Categories, "Id", "Name", product.CategoryId);
             return View(product);
         }
 
         // POST: Product/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, Product product, List<IFormFile> Images)
+        public async Task<IActionResult> Edit(int id, Product product, List<IFormFile>? Images, List<IFormFile>? NewImages)
         {
             if (id != product.Id)
             {
                 return NotFound();
             }
 
-            if (ModelState.IsValid)
+            var existingProduct = await _context.Products.FindAsync(id);
+            if (existingProduct == null)
             {
-                try
-                {
-                    _context.Update(product);
-                    await _context.SaveChangesAsync();
-                }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!ProductExists(product.Id))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
-                }
-                return RedirectToAction(nameof(Index));
+                return NotFound();
             }
-            ViewData["CategoryId"] = new SelectList(_context.Categories, "Id", "Name", product.CategoryId);
-            return View(product);
+
+            if (!ModelState.IsValid)
+            {
+                ViewData["CategoryId"] = new SelectList(_context.Categories, "Id", "Name", product.CategoryId);
+                return View(product);
+            }
+
+            try
+            {
+                existingProduct.Name = product.Name;
+                existingProduct.Description = product.Description;
+                existingProduct.Price = product.Price;
+                existingProduct.Stock = product.Stock;
+                existingProduct.CategoryId = product.CategoryId;
+
+                var uploadedFiles = PickUploadedFiles(Images, NewImages);
+
+                if (uploadedFiles.Any())
+                {
+                    // Xóa ảnh cũ khỏi ổ đĩa nếu là ảnh upload trong /images/products
+                    DeleteImagesFromDisk(existingProduct.Images);
+
+                    var newImagePaths = await SaveUploadedImagesAsync(uploadedFiles);
+                    existingProduct.Images = newImagePaths.Any()
+                        ? JsonConvert.SerializeObject(newImagePaths)
+                        : "[]";
+                }
+                else
+                {
+                    // Không chọn ảnh mới thì giữ ảnh cũ
+                    if (string.IsNullOrWhiteSpace(existingProduct.Images))
+                    {
+                        existingProduct.Images = string.IsNullOrWhiteSpace(product.Images) ? "[]" : product.Images;
+                    }
+                }
+
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!ProductExists(product.Id))
+                {
+                    return NotFound();
+                }
+
+                throw;
+            }
+
+            return RedirectToAction(nameof(Index));
         }
 
         // GET: Product/Delete/5
@@ -180,6 +195,7 @@ namespace QLBH.Controllers
             var product = await _context.Products
                 .Include(p => p.Category)
                 .FirstOrDefaultAsync(m => m.Id == id);
+
             if (product == null)
             {
                 return NotFound();
@@ -194,81 +210,170 @@ namespace QLBH.Controllers
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
             var product = await _context.Products.FindAsync(id);
+
             if (product != null)
             {
-                var imageList = Newtonsoft.Json.JsonConvert.DeserializeObject<List<string>>(product.Images);
-                if (imageList != null && imageList.Count > 0)
-                {
-                    foreach (var imagePath in imageList)
-                    {
-                        var fullPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", imagePath.TrimStart('/'));
-                        if (System.IO.File.Exists(fullPath))
-                        {
-                            System.IO.File.Delete(fullPath);
-                        }
-                    }
-                }
+                DeleteImagesFromDisk(product.Images);
                 _context.Products.Remove(product);
+                await _context.SaveChangesAsync();
             }
 
-            await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
         }
 
-        // GET: Product/DeleteAll
+        // POST: Product/DeleteAll
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteAll()
         {
-            var allProducts = _context.Products;
+            var allProducts = await _context.Products.ToListAsync();
+
+            foreach (var product in allProducts)
+            {
+                DeleteImagesFromDisk(product.Images);
+            }
+
             _context.Products.RemoveRange(allProducts);
             await _context.SaveChangesAsync();
 
             // Reset ID của bảng Product về 0
-            using (var connection = _context.Database.GetDbConnection())
-            {
-                await connection.OpenAsync();
-                using (var command = connection.CreateCommand())
-                {
-                    command.CommandText = "DBCC CHECKIDENT ('Product', RESEED, 0)";
-                    await command.ExecuteNonQueryAsync();
-                }
-            }
+            await _context.Database.ExecuteSqlRawAsync("DBCC CHECKIDENT ('Product', RESEED, 0)");
 
             return RedirectToAction(nameof(Index));
         }
 
-        // GET: Product/LoadAll
+        // POST: Product/LoadAll
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> LoadAll()
         {
+            var requiredCategories = new List<Category>
+            {
+                new Category { Name = "Bàn", Description = "Các loại bàn gỗ" },
+                new Category { Name = "Ghế", Description = "Các loại ghế gỗ" },
+                new Category { Name = "Tủ", Description = "Các loại tủ gỗ" },
+                new Category { Name = "Giường", Description = "Các loại giường gỗ" },
+                new Category { Name = "Kệ", Description = "Các loại kệ gỗ" },
+                new Category { Name = "Bộ Bàn Ghế", Description = "Các loại bộ bàn ghế" }
+            };
+
+            foreach (var category in requiredCategories)
+            {
+                bool exists = await _context.Categories.AnyAsync(c => c.Name == category.Name);
+                if (!exists)
+                {
+                    _context.Categories.Add(category);
+                }
+            }
+
+            await _context.SaveChangesAsync();
+
+            if (await _context.Products.AnyAsync())
+            {
+                return RedirectToAction(nameof(Index));
+            }
+
+            var categories = await _context.Categories.ToListAsync();
+
+            var banId = categories.First(c => c.Name == "Bàn").Id;
+            var gheId = categories.First(c => c.Name == "Ghế").Id;
+            var tuId = categories.First(c => c.Name == "Tủ").Id;
+            var giuongId = categories.First(c => c.Name == "Giường").Id;
+            var keId = categories.First(c => c.Name == "Kệ").Id;   
+            var boBanGheId = categories.First(c => c.Name == "Bộ Bàn Ghế").Id;
+
             var defaultProducts = new List<Product>
             {
-                // Điện thoại
-                new Product { Name = "iPhone 15", Description = "Điện thoại cao cấp của Apple", Price = 25000000, Images = "[\"/images/default/iphone15.jpg\"]", CategoryId = 1 },
-                new Product { Name = "Samsung Galaxy S23", Description = "Flagship của Samsung", Price = 23000000, Images = "[\"/images/default/galaxys23.jpg\"]", CategoryId = 1 },
-                new Product { Name = "Xiaomi 13 Pro", Description = "Điện thoại cao cấp của Xiaomi", Price = 20000000, Images = "[\"/images/default/xiaomi13pro.jpg\"]", CategoryId = 1 },
-                new Product { Name = "Google Pixel 7", Description = "Smartphone của Google với camera AI mạnh mẽ", Price = 21000000, Images = "[\"/images/default/pixel7.jpg\"]", CategoryId = 1 },
-
-                // Laptop
-                new Product { Name = "MacBook Pro 16", Description = "Laptop mạnh mẽ của Apple", Price = 60000000, Images = "[\"/images/default/macbookpro16.jpg\"]", CategoryId = 2 },
-                new Product { Name = "Dell XPS 15", Description = "Laptop cao cấp của Dell", Price = 40000000, Images = "[\"/images/default/dellxps.jpg\"]", CategoryId = 2 },
-                new Product { Name = "Asus ROG Zephyrus G14", Description = "Laptop gaming mỏng nhẹ của Asus", Price = 45000000, Images = "[\"/images/default/rogzephyrus.jpg\"]", CategoryId = 2 },
-
-                // Phụ kiện
-                new Product { Name = "AirPods Pro 2", Description = "Tai nghe không dây cao cấp của Apple", Price = 6500000, Images = "[\"/images/default/airpodspro2.jpg\"]", CategoryId = 3 },
-                new Product { Name = "Samsung Galaxy Buds 2 Pro", Description = "Tai nghe không dây của Samsung", Price = 5500000, Images = "[\"/images/default/galaxybuds2pro.jpg\"]", CategoryId = 3 },
-                new Product { Name = "Sạc nhanh 65W Anker", Description = "Bộ sạc nhanh công suất cao", Price = 1200000, Images = "[\"/images/default/anker65w.jpg\"]", CategoryId = 3 },
-
-                // Đồng hồ thông minh
-                new Product { Name = "Apple Watch Series 9", Description = "Đồng hồ thông minh của Apple", Price = 12000000, Images = "[\"/images/default/applewatch9.jpg\"]", CategoryId = 4 },
-                new Product { Name = "Samsung Galaxy Watch 6", Description = "Đồng hồ thông minh của Samsung", Price = 9000000, Images = "[\"/images/default/galaxywatch6.jpg\"]", CategoryId = 4 },
-                new Product { Name = "Garmin Fenix 7X", Description = "Đồng hồ thể thao chuyên dụng", Price = 25000000, Images = "[\"/images/default/garminfenix7x.jpg\"]", CategoryId = 4 },
-
-                // Máy tính bảng
-                new Product { Name = "iPad Pro 12.9 M2", Description = "Máy tính bảng mạnh mẽ của Apple", Price = 32000000, Images = "[\"/images/default/ipadpro12.jpg\"]", CategoryId = 5 },
-                new Product { Name = "Samsung Galaxy Tab S9", Description = "Tablet cao cấp của Samsung", Price = 28000000, Images = "[\"/images/default/galaxytabs9.jpg\"]", CategoryId = 5 }
+                new Product
+                {
+                    Name = "Bàn ăn gỗ sồi 6 ghế",
+                    Description = "Bàn ăn gỗ sồi tự nhiên, thiết kế hiện đại, phù hợp gia đình.",
+                    Price = 8500000,
+                    Images = "[\"/images/default/ban-an-go-soi.jpg\"]",
+                    CategoryId = banId,
+                    Stock = 5
+                },
+                new Product
+                {
+                    Name = "Bàn làm việc gỗ MDF",
+                    Description = "Bàn làm việc gọn gàng, phù hợp phòng ngủ hoặc văn phòng nhỏ.",
+                    Price = 3200000,
+                    Images = "[\"/images/default/ban-lam-viec-mdf.jpg\"]",
+                    CategoryId = banId,
+                    Stock = 8
+                },
+                new Product
+                {
+                    Name = "Ghế gỗ óc chó",
+                    Description = "Ghế gỗ óc chó sang trọng, bền đẹp theo thời gian.",
+                    Price = 2500000,
+                    Images = "[\"/images/default/ghe-go-oc-cho.jpg\"]",
+                    CategoryId = gheId,
+                    Stock = 10
+                },
+                new Product
+                {
+                    Name = "Ghế ăn gỗ cao su",
+                    Description = "Ghế ăn chắc chắn, kiểu dáng đơn giản, phù hợp nhiều không gian.",
+                    Price = 950000,
+                    Images = "[\"/images/default/ghe-an-go-cao-su.jpg\"]",
+                    CategoryId = gheId,
+                    Stock = 20
+                },
+                new Product
+                {
+                    Name = "Tủ quần áo 3 cánh gỗ MDF",
+                    Description = "Tủ quần áo rộng rãi, thiết kế tiện dụng cho phòng ngủ gia đình.",
+                    Price = 7200000,
+                    Images = "[\"/images/default/tu-quan-ao-3-canh.jpg\"]",
+                    CategoryId = tuId,
+                    Stock = 4
+                },
+                new Product
+                {
+                    Name = "Tủ bếp gỗ công nghiệp",
+                    Description = "Tủ bếp hiện đại, chống ẩm tốt, dễ vệ sinh.",
+                    Price = 12500000,
+                    Images = "[\"/images/default/tu-bep-go-cong-nghiep.jpg\"]",
+                    CategoryId = tuId,
+                    Stock = 3
+                },
+                new Product
+                {
+                    Name = "Giường ngủ gỗ xoan đào 1m8",
+                    Description = "Giường ngủ chắc chắn, màu sắc ấm áp, phù hợp phòng ngủ chính.",
+                    Price = 9800000,
+                    Images = "[\"/images/default/giuong-go-xoan-dao.jpg\"]",
+                    CategoryId = giuongId,
+                    Stock = 3
+                },
+                new Product
+                {
+                    Name = "Giường tầng trẻ em gỗ tự nhiên",
+                    Description = "Giường tầng tiết kiệm không gian, an toàn cho trẻ nhỏ.",
+                    Price = 11500000,
+                    Images = "[\"/images/default/giuong-tang-tre-em.jpg\"]",
+                    CategoryId = giuongId,
+                    Stock = 2
+                },
+                new Product
+                {
+                    Name = "Kệ tivi gỗ hiện đại",
+                    Description = "Kệ tivi thiết kế tối giản, phù hợp phòng khách hiện đại.",
+                    Price = 4200000,
+                    Images = "[\"/images/default/ke-tivi-go.jpg\"]",
+                    CategoryId = keId,
+                    Stock = 6
+                },
+                new Product
+                {
+                    Name = "Kệ sách gỗ 5 tầng",
+                    Description = "Kệ sách nhiều ngăn, tiện lợi cho phòng làm việc hoặc phòng khách.",
+                    Price = 2800000,
+                    Images = "[\"/images/default/ke-sach-5-tang.jpg\"]",
+                    CategoryId = keId,
+                    Stock = 7
+                }
             };
 
             _context.Products.AddRange(defaultProducts);
@@ -280,6 +385,94 @@ namespace QLBH.Controllers
         private bool ProductExists(int id)
         {
             return _context.Products.Any(e => e.Id == id);
+        }
+
+        private static List<IFormFile> PickUploadedFiles(List<IFormFile>? images, List<IFormFile>? newImages)
+        {
+            if (newImages != null && newImages.Any(f => f.Length > 0))
+            {
+                return newImages.Where(f => f.Length > 0).ToList();
+            }
+
+            if (images != null && images.Any(f => f.Length > 0))
+            {
+                return images.Where(f => f.Length > 0).ToList();
+            }
+
+            return new List<IFormFile>();
+        }
+
+        private async Task<List<string>> SaveUploadedImagesAsync(List<IFormFile> files)
+        {
+            var imagePaths = new List<string>();
+
+            if (files == null || !files.Any())
+            {
+                return imagePaths;
+            }
+
+            var uploadPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "images", "products");
+
+            if (!Directory.Exists(uploadPath))
+            {
+                Directory.CreateDirectory(uploadPath);
+            }
+
+            foreach (var file in files)
+            {
+                if (file.Length <= 0) continue;
+
+                var fileName = Guid.NewGuid() + Path.GetExtension(file.FileName);
+                var filePath = Path.Combine(uploadPath, fileName);
+
+                using var stream = new FileStream(filePath, FileMode.Create);
+                await file.CopyToAsync(stream);
+
+                imagePaths.Add($"/images/products/{fileName}");
+            }
+
+            return imagePaths;
+        }
+
+        private void DeleteImagesFromDisk(string? imagesJson)
+        {
+            if (string.IsNullOrWhiteSpace(imagesJson))
+            {
+                return;
+            }
+
+            List<string> imageList;
+
+            try
+            {
+                imageList = JsonConvert.DeserializeObject<List<string>>(imagesJson) ?? new List<string>();
+            }
+            catch
+            {
+                imageList = new List<string> { imagesJson };
+            }
+
+            foreach (var imagePath in imageList)
+            {
+                if (string.IsNullOrWhiteSpace(imagePath)) continue;
+
+                // Chỉ xóa ảnh upload trong thư mục products, tránh xóa ảnh mặc định
+                if (!imagePath.StartsWith("/images/products/", StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+
+                var fullPath = Path.Combine(
+                    Directory.GetCurrentDirectory(),
+                    "wwwroot",
+                    imagePath.TrimStart('/').Replace('/', Path.DirectorySeparatorChar)
+                );
+
+                if (System.IO.File.Exists(fullPath))
+                {
+                    System.IO.File.Delete(fullPath);
+                }
+            }
         }
     }
 }

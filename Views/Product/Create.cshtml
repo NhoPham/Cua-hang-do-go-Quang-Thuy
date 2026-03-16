@@ -1,58 +1,198 @@
 @model QLBH.Models.Product
 
 @{
-    ViewData["Title"] = "Create";
+    ViewData["Title"] = "Tạo sản phẩm mới";
 }
 
-<h1>Create</h1>
+<div class="container py-4">
+    <div class="mb-4">
+        <h1 class="page-title">Tạo sản phẩm mới</h1>
+        <p class="text-muted mb-0">Thêm sản phẩm mới cho Cửa hàng đồ gỗ Quảng Thủy</p>
+    </div>
 
-<h4>Product</h4>
-<hr />
-<div class="row">
-    <div class="col-md-4">
-        <form asp-action="Create" enctype="multipart/form-data">
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-            <div class="form-group">
-                <label asp-for="Name" class="control-label"></label>
-                <input asp-for="Name" class="form-control" />
-                <span asp-validation-for="Name" class="text-danger"></span>
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="form-card shadow-sm">
+                <h4 class="section-title">Thông tin sản phẩm</h4>
+                <hr />
+
+                <form asp-action="Create" enctype="multipart/form-data" method="post">
+                    <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+                    <div class="mb-3">
+                        <label asp-for="Name" class="form-label">Tên sản phẩm</label>
+                        <input asp-for="Name" class="form-control" placeholder="Nhập tên sản phẩm..." />
+                        <span asp-validation-for="Name" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Description" class="form-label">Mô tả</label>
+                        <textarea asp-for="Description" class="form-control" rows="4" placeholder="Nhập mô tả sản phẩm..."></textarea>
+                        <span asp-validation-for="Description" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="Images" class="form-label">Hình ảnh</label>
+                        <input type="file" id="Images" name="Images" class="form-control" multiple accept="image/*" />
+                        <small class="text-muted">Bạn có thể chọn một hoặc nhiều ảnh.</small>
+                    </div>
+
+                    <div id="previewImages" class="preview-grid mb-3"></div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="Price" class="form-label">Giá</label>
+                            <input asp-for="Price" class="form-control" placeholder="Nhập giá sản phẩm..." />
+                            <span asp-validation-for="Price" class="text-danger"></span>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="Stock" class="form-label">Số lượng</label>
+                            <input asp-for="Stock" class="form-control" placeholder="Nhập số lượng tồn kho..." />
+                            <span asp-validation-for="Stock" class="text-danger"></span>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label asp-for="CategoryId" class="form-label">Danh mục</label>
+                        <select asp-for="CategoryId" class="form-select" asp-items="ViewBag.CategoryId">
+                            <option value="">-- Chọn danh mục --</option>
+                        </select>
+                        <span asp-validation-for="CategoryId" class="text-danger"></span>
+                    </div>
+
+                    <div class="action-group">
+                        <button type="submit" class="btn btn-primary btn-lg">Tạo sản phẩm</button>
+                        <a asp-action="Index" class="btn btn-secondary btn-lg">Quay lại danh sách</a>
+                    </div>
+                </form>
             </div>
-            <div class="form-group">
-                <label asp-for="Description" class="control-label"></label>
-                <input asp-for="Description" class="form-control" />
-                <span asp-validation-for="Description" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label for="Images" class="control-label">Upload images</label>
-                <input type="file" id="Images" name="Images" class="form-control" multiple />
-            </div>
-            <div class="form-group">
-                <label asp-for="Price" class="control-label"></label>
-                <input asp-for="Price" class="form-control" />
-                <span asp-validation-for="Price" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="Stock" class="control-label"></label>
-                <input asp-for="Stock" class="form-control" />
-                <span asp-validation-for="Stock" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="CategoryId" class="control-label"></label>
-                <select asp-for="CategoryId" class="form-control" asp-items="ViewBag.CategoryId"></select>
-            </div>
-            <div class="form-group">
-                <input type="submit" value="Create" class="btn btn-primary mt-3" />
-            </div>
-        </form>
+        </div>
     </div>
 </div>
 
-<div>
-    <a asp-action="Index">Back to List</a>
-</div>
+<style>
+    .page-title {
+        font-size: 2rem;
+        font-weight: 700;
+        color: #2c3e50;
+    }
+
+    .form-card {
+        background: #fff;
+        border-radius: 18px;
+        padding: 24px;
+        border: 1px solid #eee;
+    }
+
+    .section-title {
+        font-size: 1.3rem;
+        font-weight: 700;
+        color: #2c3e50;
+        margin-bottom: 0;
+    }
+
+    .form-label {
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 8px;
+    }
+
+    .form-control,
+    .form-select {
+        border-radius: 12px;
+        min-height: 48px;
+        border: 1px solid #dcdcdc;
+        box-shadow: none;
+    }
+
+    textarea.form-control {
+        min-height: 120px;
+    }
+
+    .form-control:focus,
+    .form-select:focus {
+        border-color: #0d6efd;
+        box-shadow: 0 0 0 0.15rem rgba(13, 110, 253, 0.15);
+    }
+
+    .preview-grid {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+    }
+
+    .preview-item {
+        width: 140px;
+        height: 140px;
+        border: 1px solid #ddd;
+        border-radius: 12px;
+        overflow: hidden;
+        background: #f8f9fa;
+    }
+
+    .preview-item img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .action-group {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+    }
+
+    .action-group .btn {
+        min-width: 160px;
+    }
+
+    @@media (max-width: 768px) {
+        .form-card {
+            padding: 18px;
+        }
+
+        .page-title {
+            font-size: 1.6rem;
+        }
+
+        .action-group {
+            flex-direction: column;
+        }
+
+        .action-group .btn {
+            width: 100%;
+        }
+    }
+</style>
 
 @section Scripts {
     @{
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
     }
+
+    <script>
+        document.getElementById('Images').addEventListener('change', function (e) {
+            const preview = document.getElementById('previewImages');
+            preview.innerHTML = '';
+
+            Array.from(e.target.files).forEach(file => {
+                const reader = new FileReader();
+
+                reader.onload = function (event) {
+                    const wrapper = document.createElement('div');
+                    wrapper.className = 'preview-item';
+
+                    const img = document.createElement('img');
+                    img.src = event.target.result;
+                    img.alt = 'Ảnh xem trước';
+
+                    wrapper.appendChild(img);
+                    preview.appendChild(wrapper);
+                };
+
+                reader.readAsDataURL(file);
+            });
+        });
+    </script>
 }

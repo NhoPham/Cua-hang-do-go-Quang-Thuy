@@ -1,25 +1,32 @@
 @model IEnumerable<QLBH.Models.Product>
+@using Newtonsoft.Json
+
 @{
     ViewData["Title"] = "Danh sách sản phẩm";
 }
 
-<div class="d-flex justify-content-between align-items-center mb-3">
+<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
     <h1 class="mb-0">Danh sách sản phẩm</h1>
-    <div>
+    <div class="d-flex flex-wrap gap-2">
         <a class="btn btn-primary" asp-action="Create">Thêm sản phẩm</a>
-        <form method="post" asp-action="LoadAll" style="display: inline;">
+
+<!--        <form method="post" asp-action="LoadAll" style="display: inline;">
+            @Html.AntiForgeryToken()
             <button type="submit" class="btn btn-primary">Nạp sản phẩm</button>
         </form>
+-->
         <form method="post" asp-action="DeleteAll" style="display: inline;">
+            @Html.AntiForgeryToken()
             <button type="submit" class="btn btn-danger"
-                onclick="return confirm('Bạn có chắc chắn muốn xóa tất cả sản phẩm?');">Xóa tất cả</button>
+                    onclick="return confirm('Bạn có chắc chắn muốn xóa tất cả sản phẩm?');">
+                Xóa tất cả
+            </button>
         </form>
     </div>
 </div>
 
 <hr />
 
-<!-- Form tìm kiếm và lọc -->
 <form method="get" asp-action="Index" class="row g-3 align-items-center mb-4">
     <div class="col-md-4">
         <select class="form-select" name="categoryId" asp-items="ViewBag.CategoryId" onchange="this.form.submit()">
@@ -27,8 +34,11 @@
         </select>
     </div>
     <div class="col-md-6">
-        <input type="text" name="searchString" class="form-control" placeholder="Tìm kiếm sản phẩm..."
-            value="@ViewContext.HttpContext.Request.Query["searchString"]" />
+        <input type="text"
+               name="searchString"
+               class="form-control"
+               placeholder="Tìm kiếm sản phẩm..."
+               value="@ViewContext.HttpContext.Request.Query["searchString"]" />
     </div>
     <div class="col-md-2">
         <button type="submit" class="btn btn-primary w-100">Tìm kiếm</button>
@@ -37,39 +47,64 @@
 
 <hr />
 
-<!-- Danh sách sản phẩm -->
 <div class="row">
     @foreach (var item in Model)
     {
-        <div class="col-md-4 w-25">
-            <div class="card my-4 product-card w-100">
-                <a class="card-header text-info" asp-action="Details" asp-route-id="@item.Id">@item.Name</a>
-                <div class="card-body">
-                    @if (!string.IsNullOrEmpty(item.Images))
-                    {
-                        var imageList = Newtonsoft.Json.JsonConvert.DeserializeObject<List<string>>(item.Images);
-                        if (imageList != null && imageList.Any())
-                        {
-                            <a asp-action="Details" asp-route-id="@item.Id">
-                                <img src="@imageList.First()" class="card-img-top product-image" alt="Ảnh sản phẩm">
-                            </a>
-                        }
-                    }
-                    else
-                    {
-                        <p class="text-muted">Không có ảnh</p>
-                    }
+        List<string> imageList = new();
 
-                    <p class="card-text">@item.Description</p>
-                    <p class="card-text">@item.Price</p>
-                    <a href="#" class="btn btn-primary">Đặt hàng</a>
+        if (!string.IsNullOrWhiteSpace(item.Images))
+        {
+            try
+            {
+                imageList = JsonConvert.DeserializeObject<List<string>>(item.Images) ?? new List<string>();
+            }
+            catch
+            {
+                imageList = new List<string> { item.Images };
+            }
+        }
+
+        var firstImage = imageList.Any() ? imageList.First() : "/images/default/no-image.jpg";
+        var imagesJson = System.Text.Json.JsonSerializer.Serialize(imageList);
+
+        <div class="col-12 col-sm-6 col-lg-4 col-xl-3 mb-4">
+            <div class="card h-100 product-card shadow-sm">
+                <a class="card-header text-info text-decoration-none"
+                   asp-action="Details"
+                   asp-route-id="@item.Id"
+                   title="@item.Name">
+                    @item.Name
+                </a>
+
+                <div class="card-body d-flex flex-column">
+                    <a asp-action="Details" asp-route-id="@item.Id" class="image-wrapper">
+                        <img src="@firstImage"
+                             class="card-img-top product-image auto-slide-img"
+                             alt="Ảnh sản phẩm @item.Name"
+                             data-images='@Html.Raw(imagesJson)' />
+                    </a>
+
+                    <p class="card-text product-description mt-3">
+                        @(string.IsNullOrWhiteSpace(item.Description) ? "Chưa có mô tả." : item.Description)
+                    </p>
+
+                    <p class="card-text product-price mb-2">
+                        @String.Format("{0:N0} đ", item.Price)
+                    </p>
+
+                    <div class="mt-auto d-flex gap-2">
+                        <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-outline-primary w-50">
+                            Chi tiết
+                        </a>
+                        <a href="#" class="btn btn-primary w-50">Đặt hàng</a>
+                    </div>
                 </div>
             </div>
         </div>
     }
 </div>
 
-@if(ViewBag.TotalPages > 1)
+@if (ViewBag.TotalPages > 1)
 {
     <nav class="d-flex justify-content-center" aria-label="Page navigation">
         <ul class="pagination">
@@ -82,6 +117,7 @@
                     <span aria-hidden="true">&laquo;</span>
                 </a>
             </li>
+
             @for (int i = 1; i <= ViewBag.TotalPages; i++)
             {
                 <li class="page-item @(ViewBag.CurrentPage == i ? "active" : "")">
@@ -94,6 +130,7 @@
                     </a>
                 </li>
             }
+
             <li class="page-item">
                 <a class="page-link" href="@Url.Action("Index", new {
                     page = ViewBag.TotalPages,
@@ -109,23 +146,52 @@
 
 <style>
     .card-header {
-        font-size: 1.8rem;
+        font-size: 1.2rem;
+        font-weight: 600;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
         display: block;
         max-width: 100%;
+        background-color: #f8f9fa;
+    }
+
+    .product-card {
+        border-radius: 12px;
+        overflow: hidden;
+    }
+
+    .image-wrapper {
+        display: block;
     }
 
     .product-image {
         width: 100%;
-        height: 200px;
+        height: 220px;
         object-fit: cover;
         border-radius: 8px;
+        transition: opacity 0.5s ease-in-out;
+        background: #f5f5f5;
     }
 
-    a {
-        font-size: 1.8rem;
+    .product-image.fade-out {
+        opacity: 0.35;
+    }
+
+    .product-description {
+        min-height: 72px;
+        font-size: 0.95rem;
+        color: #555;
+        overflow: hidden;
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        -webkit-box-orient: vertical;
+    }
+
+    .product-price {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: #c0392b;
     }
 
     .page-item .page-link {
@@ -133,6 +199,38 @@
     }
 
     .page-item {
-        margin: 0 10px;
+        margin: 0 6px;
     }
 </style>
+
+@section Scripts {
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const imageElements = document.querySelectorAll(".auto-slide-img");
+
+            imageElements.forEach(img => {
+                let imageList = [];
+
+                try {
+                    imageList = JSON.parse(img.dataset.images || "[]");
+                } catch {
+                    imageList = [];
+                }
+
+                if (!imageList || imageList.length <= 1) return;
+
+                let currentIndex = 0;
+
+                setInterval(() => {
+                    img.classList.add("fade-out");
+
+                    setTimeout(() => {
+                        currentIndex = (currentIndex + 1) % imageList.length;
+                        img.src = imageList[currentIndex];
+                        img.classList.remove("fade-out");
+                    }, 250);
+                }, 3000);
+            });
+        });
+    </script>
+}

@@ -1,71 +1,299 @@
 @model QLBH.Models.Product
 
 @{
-    ViewData["Title"] = "Details";
+    ViewData["Title"] = "Chi tiết sản phẩm";
+
+    List<string> imageList = new();
+
+    if (!string.IsNullOrWhiteSpace(Model.Images))
+    {
+        var raw = Model.Images.Trim();
+
+        try
+        {
+            if (raw.StartsWith("["))
+            {
+                imageList = Newtonsoft.Json.JsonConvert.DeserializeObject<List<string>>(raw) ?? new List<string>();
+            }
+            else if (raw.Contains(","))
+            {
+                imageList = raw
+                    .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                    .ToList();
+            }
+            else
+            {
+                imageList = new List<string> { raw };
+            }
+        }
+        catch
+        {
+            imageList = new List<string> { raw };
+        }
+    }
+
+    var mainImage = imageList.Any() ? imageList.First() : "/images/default/no-image.jpg";
+    var stockText = Model.Stock > 0 ? "Còn hàng" : "Hết hàng";
+    var stockClass = Model.Stock > 0 ? "stock-in" : "stock-out";
 }
 
-<h1>Chi tiết sản phẩm</h1>
+<div class="container py-4">
+    <div class="mb-4">
+        <h1 class="page-title">Chi tiết sản phẩm</h1>
+        <p class="text-muted mb-0">Thông tin chi tiết sản phẩm của Cửa hàng đồ gỗ Quảng Thủy</p>
+    </div>
 
-<div>
-    <h4>Product</h4>
-    <hr />
-    <dl class="row">
-        <dt class="col-sm-2">
-            @Html.DisplayNameFor(model => model.Name)
-        </dt>
-        <dd class="col-sm-10">
-            @Html.DisplayFor(model => model.Name)
-        </dd>
-        <dt class="col-sm-2">
-            @Html.DisplayNameFor(model => model.Description)
-        </dt>
-        <dd class="col-sm-10">
-            @Html.DisplayFor(model => model.Description)
-        </dd>
-        <dt class="col-sm-2">
-            @Html.DisplayNameFor(model => model.Images)
-        </dt>
-        <dd class="col-sm-10">
-            @if (!string.IsNullOrEmpty(Model.Images))
-            {
-                var imageList = Newtonsoft.Json.JsonConvert.DeserializeObject<List<string>>(Model.Images);
-                @if (imageList != null && imageList.Any())
+    <div class="row g-4">
+        <div class="col-lg-6">
+            <div class="gallery-card shadow-sm">
+                <div class="main-image-wrapper">
+                    <img id="mainProductImage" src="@mainImage" alt="@Model.Name" class="main-product-image" />
+                </div>
+
+                @if (imageList.Any())
                 {
-                    <div class="row">
+                    <div class="thumbnail-list mt-3">
                         @foreach (var img in imageList)
                         {
-                            <div class="col-6 col-md-4 col-lg-3 mb-3">
-                                <div class="card h-100">
-                                    <img src="@img" class="card-img-top img-fluid" alt="img">
-                                </div>
-                            </div>
+                            <button type="button" class="thumb-btn" onclick="changeMainImage('@img')">
+                                <img src="@img" alt="Ảnh sản phẩm" class="thumb-image" />
+                            </button>
                         }
                     </div>
                 }
+            </div>
+        </div>
+
+        <div class="col-lg-6">
+            <div class="info-card shadow-sm">
+                <div class="mb-3">
+                    <span class="category-badge">@(Model.Category?.Name ?? "Chưa phân loại")</span>
+                </div>
+
+                <h2 class="product-title">@Model.Name</h2>
+
+                <div class="price-box mb-3">
+                    @String.Format("{0:N0} đ", Model.Price)
+                </div>
+
+                <div class="mb-3">
+                    <span class="stock-badge @stockClass">@stockText</span>
+                    <span class="stock-count">Số lượng tồn kho: <strong>@Model.Stock</strong></span>
+                </div>
+
+                <div class="detail-block">
+                    <h5>Mô tả sản phẩm</h5>
+                    <p class="product-description">
+                        @(string.IsNullOrWhiteSpace(Model.Description) ? "Chưa có mô tả sản phẩm." : Model.Description)
+                    </p>
+                </div>
+
+                <div class="detail-grid">
+                    <div class="detail-item">
+                        <span class="detail-label">Mã sản phẩm</span>
+                        <span class="detail-value">#@Model.Id</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Danh mục</span>
+                        <span class="detail-value">@(Model.Category?.Name ?? "Chưa có")</span>
+                    </div>
+                </div>
+
+                <div class="action-group mt-4">
+                    <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-primary btn-lg">Chỉnh sửa</a>
+                    <a asp-action="Delete" asp-route-id="@Model.Id" class="btn btn-outline-danger btn-lg">Xóa</a>
+                    <a asp-action="Index" class="btn btn-secondary btn-lg">Quay lại</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .page-title {
+        font-size: 2rem;
+        font-weight: 700;
+        color: #2c3e50;
+    }
+
+    .gallery-card,
+    .info-card {
+        background: #fff;
+        border-radius: 18px;
+        padding: 20px;
+        border: 1px solid #eee;
+    }
+
+    .main-image-wrapper {
+        width: 100%;
+        background: #f8f9fa;
+        border-radius: 16px;
+        overflow: hidden;
+        border: 1px solid #eee;
+    }
+
+    .main-product-image {
+        width: 100%;
+        height: 430px;
+        object-fit: cover;
+        display: block;
+    }
+
+    .thumbnail-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    .thumb-btn {
+        border: none;
+        background: transparent;
+        padding: 0;
+        border-radius: 10px;
+    }
+
+    .thumb-image {
+        width: 80px;
+        height: 80px;
+        object-fit: cover;
+        border-radius: 10px;
+        border: 2px solid #ddd;
+        transition: transform 0.2s ease, border-color 0.2s ease;
+    }
+
+    .thumb-image:hover {
+        transform: scale(1.05);
+        border-color: #0d6efd;
+    }
+
+    .category-badge {
+        display: inline-block;
+        background: #eaf3ff;
+        color: #0d6efd;
+        padding: 8px 14px;
+        border-radius: 999px;
+        font-size: 0.95rem;
+        font-weight: 600;
+    }
+
+    .product-title {
+        font-size: 2rem;
+        font-weight: 700;
+        color: #222;
+        margin-bottom: 12px;
+    }
+
+    .price-box {
+        font-size: 2rem;
+        font-weight: 800;
+        color: #c0392b;
+    }
+
+    .stock-badge {
+        display: inline-block;
+        padding: 7px 14px;
+        border-radius: 999px;
+        font-weight: 600;
+        margin-right: 10px;
+    }
+
+    .stock-in {
+        background: #e8f8ee;
+        color: #1e8449;
+    }
+
+    .stock-out {
+        background: #fdecea;
+        color: #c0392b;
+    }
+
+    .stock-count {
+        color: #555;
+        font-size: 1rem;
+    }
+
+    .detail-block {
+        margin-top: 20px;
+        padding: 16px;
+        background: #f8f9fa;
+        border-radius: 14px;
+    }
+
+    .detail-block h5 {
+        margin-bottom: 10px;
+        font-weight: 700;
+        color: #2c3e50;
+    }
+
+    .product-description {
+        margin: 0;
+        color: #555;
+        line-height: 1.7;
+    }
+
+    .detail-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 14px;
+        margin-top: 20px;
+    }
+
+    .detail-item {
+        background: #fafafa;
+        border: 1px solid #eee;
+        border-radius: 14px;
+        padding: 14px;
+    }
+
+    .detail-label {
+        display: block;
+        font-size: 0.9rem;
+        color: #777;
+        margin-bottom: 6px;
+    }
+
+    .detail-value {
+        font-size: 1rem;
+        font-weight: 600;
+        color: #222;
+    }
+
+    .action-group {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+    }
+
+    .action-group .btn {
+        min-width: 140px;
+    }
+
+    @@media (max-width: 768px) {
+        .main-product-image {
+            height: 280px;
+        }
+
+        .product-title {
+            font-size: 1.6rem;
+        }
+
+        .price-box {
+            font-size: 1.6rem;
+        }
+
+        .detail-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+
+@section Scripts {
+    <script>
+        function changeMainImage(imageUrl) {
+            const mainImage = document.getElementById('mainProductImage');
+            if (mainImage) {
+                mainImage.src = imageUrl;
             }
-        </dd>
-        <dt class="col-sm-2">
-            @Html.DisplayNameFor(model => model.Price)
-        </dt>
-        <dd class="col-sm-10">
-            @Html.DisplayFor(model => model.Price)
-        </dd>
-        <dt class="col-sm-2">
-            @Html.DisplayNameFor(model => model.Stock)
-        </dt>
-        <dd class="col-sm-10">
-            @Html.DisplayFor(model => model.Stock)
-        </dd>
-        <dt class="col-sm-2">
-            @Html.DisplayNameFor(model => model.Category)
-        </dt>
-        <dd class="col-sm-10">
-            @Html.DisplayFor(model => model.Category.Name)
-        </dd>
-    </dl>
-</div>
-<div>
-    <a asp-action="Edit" asp-route-id="@Model?.Id">Edit</a> |
-    <a asp-action="Delete" asp-route-id="@Model?.Id">Delete</a> |
-    <a asp-action="Index">Back to List</a>
-</div>
+        }
+    </script>
+}

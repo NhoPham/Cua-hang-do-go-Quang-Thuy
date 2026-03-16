@@ -1,65 +1,138 @@
 @model QLBH.Models.Product
 
 @{
-    ViewData["Title"] = "Edit";
+    ViewData["Title"] = "Chỉnh Sửa Sản Phẩm";
 }
 
-<h1>Edit</h1>
+<h1>Chỉnh Sửa Sản Phẩm</h1>
 
-<h4>Product</h4>
+<h4>Sản Phẩm</h4>
 <hr />
+
 <div class="row">
-    <div class="col-md-4">
-        <form asp-action="Edit" enctype="multipart/form-data">
+    <div class="col-md-6">
+        <form asp-action="Edit" enctype="multipart/form-data" method="post">
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
             <input type="hidden" asp-for="Id" />
-            <div class="form-group">
-                <label asp-for="Name" class="control-label"></label>
+            <input type="hidden" asp-for="Images" />
+
+            <div class="form-group mb-3">
+                <label asp-for="Name" class="control-label">Tên Sản Phẩm</label>
                 <input asp-for="Name" class="form-control" />
                 <span asp-validation-for="Name" class="text-danger"></span>
             </div>
-            <div class="form-group">
-                <label asp-for="Description" class="control-label"></label>
-                <input asp-for="Description" class="form-control" />
+
+            <div class="form-group mb-3">
+                <label asp-for="Description" class="control-label">Mô Tả Sản Phẩm</label>
+                <textarea asp-for="Description" class="form-control" rows="4"></textarea>
                 <span asp-validation-for="Description" class="text-danger"></span>
             </div>
-            @* <div class="form-group">
-                <label asp-for="Images" class="control-label"></label>
-                <input asp-for="Images" class="form-control" />
-                <span asp-validation-for="Images" class="text-danger"></span>
-            </div> *@
-            <div class="form-group">
-                <label for="Images" class="control-label">Upload images</label>
-                <input type="file" id="Images" name="Images" class="form-control" multiple />
+
+            <div class="form-group mb-3">
+                <label class="control-label">Hình Ảnh Hiện Tại</label>
+                <div id="currentImages" class="mb-2">
+                    @{
+                        var raw = Model.Images ?? "[]";
+                        List<string> imageList = new();
+
+                        try
+                        {
+                            imageList = System.Text.Json.JsonSerializer.Deserialize<List<string>>(raw) ?? new();
+                        }
+                        catch
+                        {
+                            if (!string.IsNullOrWhiteSpace(raw))
+                            {
+                                imageList = new List<string> { raw };
+                            }
+                        }
+                    }
+
+                    @if (imageList.Any())
+                    {
+                        <div class="row">
+                            @foreach (var img in imageList)
+                            {
+                                <div class="col-6 col-md-4 mb-3">
+                                    <div class="card h-100">
+                                        <img src="@img" alt="Hình ảnh sản phẩm" class="card-img-top img-fluid" style="max-height: 180px; object-fit: cover;" />
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <p class="text-muted">Chưa có hình ảnh.</p>
+                    }
+                </div>
             </div>
-            <div class="form-group">
-                <label asp-for="Price" class="control-label"></label>
+
+            <div class="form-group mb-3">
+                <label for="NewImages" class="control-label">Chọn Hình Ảnh Mới</label>
+                <input type="file" id="NewImages" name="NewImages" class="form-control" multiple accept="image/*" />
+                <small class="form-text text-muted">Nếu không chọn ảnh mới, hệ thống sẽ giữ nguyên ảnh cũ.</small>
+            </div>
+
+            <div id="previewImages" class="mb-3"></div>
+
+            <div class="form-group mb-3">
+                <label asp-for="Price" class="control-label">Giá</label>
                 <input asp-for="Price" class="form-control" />
                 <span asp-validation-for="Price" class="text-danger"></span>
             </div>
-            <div class="form-group">
-                <label asp-for="Stock" class="control-label"></label>
+
+            <div class="form-group mb-3">
+                <label asp-for="Stock" class="control-label">Số Lượng Tồn Kho</label>
                 <input asp-for="Stock" class="form-control" />
                 <span asp-validation-for="Stock" class="text-danger"></span>
             </div>
-            <div class="form-group">
-                <label asp-for="CategoryId" class="control-label"></label>
+
+            <div class="form-group mb-3">
+                <label asp-for="CategoryId" class="control-label">Danh Mục Sản Phẩm</label>
                 <select asp-for="CategoryId" class="form-control" asp-items="ViewBag.CategoryId"></select>
                 <span asp-validation-for="CategoryId" class="text-danger"></span>
             </div>
-            <div class="form-group">
-                <input type="submit" value="Save" class="btn btn-primary" />
+
+            <div class="form-group mt-3">
+                <input type="submit" value="Cập Nhật Sản Phẩm" class="btn btn-primary" />
+                <a asp-action="Index" class="btn btn-secondary ms-2">Quay lại danh sách sản phẩm</a>
             </div>
         </form>
     </div>
-</div>
-
-<div>
-    <a asp-action="Index">Back to List</a>
 </div>
 
 @section Scripts {
     @{
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
     }
+
+    <script>
+        document.getElementById('NewImages').addEventListener('change', function (e) {
+            const preview = document.getElementById('previewImages');
+            preview.innerHTML = '';
+
+            Array.from(e.target.files).forEach(file => {
+                const reader = new FileReader();
+                reader.onload = function (event) {
+                    const wrapper = document.createElement('div');
+                    wrapper.style.display = 'inline-block';
+                    wrapper.style.margin = '5px';
+
+                    const img = document.createElement('img');
+                    img.src = event.target.result;
+                    img.style.maxWidth = '150px';
+                    img.style.maxHeight = '150px';
+                    img.style.objectFit = 'cover';
+                    img.style.border = '1px solid #ddd';
+                    img.style.padding = '4px';
+
+                    wrapper.appendChild(img);
+                    preview.appendChild(wrapper);
+                };
+                reader.readAsDataURL(file);
+            });
+        });
+    </script>
 }
