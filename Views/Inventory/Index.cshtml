@@ -1,0 +1,112 @@
+@model InventoryDashboardViewModel
+
+@{
+    ViewData["Title"] = "Quản lý kho";
+}
+
+<h1 class="fw-bold mb-3">Quản lý kho</h1>
+<p class="text-muted mb-4">Theo dõi tồn kho, sản phẩm bán chạy và nhập/xuất thủ công.</p>
+
+<div class="row g-4">
+    <div class="col-lg-4">
+        <div class="card border-0 shadow-sm rounded-4">
+            <div class="card-body p-4">
+                <h4 class="fw-bold mb-3">Điều chỉnh tồn kho</h4>
+
+                <form asp-action="AdjustStock" method="post">
+                    @Html.AntiForgeryToken()
+
+                    <div class="mb-3">
+                        <label class="form-label">Sản phẩm</label>
+                        <select class="form-select" name="ProductId" required>
+                            <option value="">Chọn sản phẩm</option>
+                            @foreach (var item in Model.Products.OrderBy(x => x.ProductName))
+                            {
+                                <option value="@item.ProductId">@item.ProductName (tồn @item.Stock)</option>
+                            }
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Loại điều chỉnh</label>
+                        <select class="form-select" name="Type">
+                            <option value="IMPORT">Nhập kho</option>
+                            <option value="EXPORT">Xuất kho</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Số lượng</label>
+                        <input type="number" name="Quantity" min="1" class="form-control" required />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Ghi chú</label>
+                        <textarea name="Note" class="form-control" rows="3"></textarea>
+                    </div>
+
+                    <button class="btn btn-primary w-100" type="submit">Lưu điều chỉnh</button>
+                </form>
+            </div>
+        </div>
+
+        <div class="card border-0 shadow-sm rounded-4 mt-4">
+            <div class="card-body p-4">
+                <h4 class="fw-bold mb-3">Biến động kho gần đây</h4>
+                <div class="small">
+                    @foreach (var tx in Model.RecentTransactions)
+                    {
+                        <div class="border rounded-3 p-2 mb-2">
+                            <div class="fw-semibold">@tx.Product.Name</div>
+                            <div>Biến động: <strong>@tx.QuantityChanged</strong> | Tồn sau: <strong>@tx.QuantityAfter</strong></div>
+                            <div class="text-muted">@tx.Type - @tx.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</div>
+                            @if (!string.IsNullOrWhiteSpace(tx.ReferenceCode))
+                            {
+                                <div class="text-muted">Mã tham chiếu: @tx.ReferenceCode</div>
+                            }
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm rounded-4">
+            <div class="table-responsive">
+                <table class="table align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Sản phẩm</th>
+                            <th class="text-end">Giá</th>
+                            <th class="text-center">Đã bán</th>
+                            <th class="text-center">Tồn kho</th>
+                            <th class="text-center">Cảnh báo</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model.Products)
+                        {
+                            <tr>
+                                <td class="fw-semibold">@item.ProductName</td>
+                                <td class="text-end">@item.Price.ToString("N0") đ</td>
+                                <td class="text-center">@item.SoldQuantity</td>
+                                <td class="text-center">@item.Stock</td>
+                                <td class="text-center">
+                                    @if (item.IsLowStock)
+                                    {
+                                        <span class="badge bg-danger">Sắp hết hàng</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-success">Ổn định</span>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

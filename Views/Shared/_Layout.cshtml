@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - QLBH</title>
+    <title>@ViewData["Title"] - Đồ Gỗ Quảng Thủy</title>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
 </head>
@@ -11,49 +11,50 @@
     <header>
         <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm">
             <div class="container">
-                <a class="navbar-brand fw-bold" asp-controller="Home" asp-action="Index">Đồ Gỗ Quảng Thủy</a>
+                <a class="navbar-brand fw-semibold" asp-controller="Home" asp-action="Index">Đồ Gỗ Quảng Thủy</a>
 
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav">
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavbar">
                     <span class="navbar-toggler-icon"></span>
                 </button>
 
-                <div class="collapse navbar-collapse" id="mainNav">
+                <div class="collapse navbar-collapse" id="mainNavbar">
                     <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                        <li class="nav-item">
-                            <a class="nav-link" asp-controller="Home" asp-action="Index">Trang chủ</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" asp-controller="Product" asp-action="Index">Sản phẩm</a>
-                        </li>
+                        <li class="nav-item"><a class="nav-link" asp-controller="Home" asp-action="Index">Trang chủ</a></li>
+                        <li class="nav-item"><a class="nav-link" asp-controller="Product" asp-action="Index">Sản phẩm</a></li>
+                        <li class="nav-item"><a class="nav-link" asp-controller="Order" asp-action="Track">Theo dõi đơn</a></li>
+
+                        @if (User.Identity?.IsAuthenticated == true)
+                        {
+                            <li class="nav-item"><a class="nav-link" asp-controller="Cart" asp-action="Index">Giỏ hàng</a></li>
+                            <li class="nav-item"><a class="nav-link" asp-controller="Order" asp-action="Index">Đơn của tôi</a></li>
+                        }
+
                         @if (User.IsInRole("admin"))
                         {
-                            <li class="nav-item">
-                                <a class="nav-link" asp-controller="Product" asp-action="Create">Thêm sản phẩm</a>
-                            </li>
+                            <li class="nav-item"><a class="nav-link" asp-controller="Order" asp-action="Admin">Quản lý đơn</a></li>
+                            <li class="nav-item"><a class="nav-link" asp-controller="Inventory" asp-action="Index">Kho</a></li>
+                            <li class="nav-item"><a class="nav-link" asp-controller="Statistics" asp-action="Index">Thống kê</a></li>
+                            <li class="nav-item"><a class="nav-link" asp-controller="Product" asp-action="Create">Thêm sản phẩm</a></li>
                         }
                     </ul>
 
-                    <ul class="navbar-nav">
+                    <ul class="navbar-nav ms-auto align-items-lg-center">
                         @if (User.Identity?.IsAuthenticated == true)
                         {
-                            <li class="nav-item">
-                                <span class="nav-link text-warning">Xin chào, @User.Identity.Name</span>
+                            <li class="nav-item me-lg-3">
+                                <span class="navbar-text">Xin chào, <strong>@User.Identity.Name</strong></span>
                             </li>
                             <li class="nav-item">
                                 <form asp-controller="Account" asp-action="Logout" method="post" class="d-inline">
                                     @Html.AntiForgeryToken()
-                                    <button type="submit" class="btn btn-outline-light btn-sm mt-1">Đăng xuất</button>
+                                    <button type="submit" class="btn btn-outline-light btn-sm">Đăng xuất</button>
                                 </form>
                             </li>
                         }
                         else
                         {
-                            <li class="nav-item me-2">
-                                <a class="btn btn-outline-light btn-sm mt-1" asp-controller="Account" asp-action="Login">Đăng nhập</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="btn btn-warning btn-sm mt-1" asp-controller="Account" asp-action="Register">Đăng ký</a>
-                            </li>
+                            <li class="nav-item me-2"><a class="btn btn-outline-light btn-sm" asp-controller="Account" asp-action="Login">Đăng nhập</a></li>
+                            <li class="nav-item"><a class="btn btn-warning btn-sm" asp-controller="Account" asp-action="Register">Đăng ký</a></li>
                         }
                     </ul>
                 </div>
@@ -64,15 +65,34 @@
     <main class="container py-4">
         @if (TempData["SuccessMessage"] != null)
         {
-            <div class="alert alert-success">@TempData["SuccessMessage"]</div>
+            <div class="alert alert-success alert-dismissible fade show">
+                @TempData["SuccessMessage"]
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        }
+
+        @if (TempData["ErrorMessage"] != null)
+        {
+            <div class="alert alert-danger alert-dismissible fade show">
+                @TempData["ErrorMessage"]
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        }
+
+        @if (TempData["InfoMessage"] != null)
+        {
+            <div class="alert alert-info alert-dismissible fade show">
+                @TempData["InfoMessage"]
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
         }
 
         @RenderBody()
     </main>
 
-    <footer class="border-top footer text-muted mt-5">
-        <div class="container py-3">
-            © 2026 - Đồ Gỗ Quảng Thủy
+    <footer class="border-top py-3 bg-white">
+        <div class="container text-muted small">
+            © @DateTime.Now.Year - Đồ Gỗ Quảng Thủy
         </div>
     </footer>
 

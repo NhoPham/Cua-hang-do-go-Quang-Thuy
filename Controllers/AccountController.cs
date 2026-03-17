@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using QLBH.Models;
+using QLBH.Services;
 using QLBH.Utils;
 using QLBH.ViewModels;
 
@@ -13,10 +14,12 @@ namespace QLBH.Controllers;
 public class AccountController : Controller
 {
     private readonly QlbhContext _context;
+    private readonly IEmailService _emailService;
 
-    public AccountController(QlbhContext context)
+    public AccountController(QlbhContext context, IEmailService emailService)
     {
         _context = context;
+        _emailService = emailService;
     }
 
     [AllowAnonymous]
@@ -55,8 +58,8 @@ public class AccountController : Controller
             return View(model);
         }
 
-        var validPassword = PasswordHelper.VerifyPassword(model.Password, account.Password) ||
-                            account.Password == model.Password; // hỗ trợ tài khoản cũ đang lưu plaintext
+        var validPassword = PasswordHelper.VerifyPassword(model.Password, account.Password)
+                            || account.Password == model.Password;
 
         if (!validPassword)
         {
@@ -134,6 +137,138 @@ public class AccountController : Controller
         return RedirectToAction("Index", "Home");
     }
 
+    [AllowAnonymous]
+    [HttpGet]
+    public IActionResult ForgotPassword()
+    {
+        return View(new ForgotPasswordViewModel());
+    }
+
+    [AllowAnonymous]
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ForgotPassword(ForgotPasswordViewModel model)
+    {
+        if (!ModelState.IsValid)
+        {
+            return View(model);
+        }
+
+        var email = model.Email.Trim().ToLower();
+        var user = await _context.Users.FirstOrDefaultAsync(x => x.Email.ToLower() == email);
+
+        ViewBag.InfoMessage = "Nếu email tồn tại trong hệ thống, liên kết khôi phục đã được tạo.";
+
+        if (user == null)
+        {
+            return View(new ForgotPasswordViewModel());
+        }
+
+        var activeTokens = await _context.PasswordResetTokens
+            .Where(x => x.UserId == user.Id && x.UsedAt == null)
+            .ToListAsync();
+
+        foreach (var item in activeTokens)
+        {
+            item.UsedAt = DateTime.UtcNow;
+        }
+
+        var tokenValue = $"{Guid.NewGuid():N}{Guid.NewGuid():N}";
+
+        _context.PasswordResetTokens.Add(new PasswordResetToken
+        {
+            UserId = user.Id,
+            Token = tokenValue,
+            CreatedAt = DateTime.UtcNow,
+            ExpiresAt = DateTime.UtcNow.AddHours(1)
+        });
+
+        await _context.SaveChangesAsync();
+
+        var resetLink = Url.Action(
+            nameof(ResetPassword),
+            "Account",
+            new { token = tokenValue },
+            Request.Scheme) ?? string.Empty;
+
+        var emailBody = $"""
+            <p>Xin chào <strong>{user.Username}</strong>,</p>
+            <p>Bạn vừa yêu cầu đặt lại mật khẩu cho tài khoản tại website Đồ Gỗ Quảng Thủy.</p>
+            <p>Bấm vào liên kết dưới đây để đặt lại mật khẩu (hiệu lực 1 giờ):</p>
+            <p><a href="{resetLink}">{resetLink}</a></p>
+            """;
+
+        var sent = await _emailService.SendAsync(user.Email, "Khôi phục mật khẩu - Đồ Gỗ Quảng Thủy", emailBody);
+
+        if (!sent)
+        {
+            ViewBag.DebugResetLink = resetLink;
+            ViewBag.InfoMessage = "SMTP chưa cấu hình hoặc gửi mail thất bại. Bạn có thể dùng link debug để test local.";
+        }
+
+        return View(new ForgotPasswordViewModel());
+    }
+
+    [AllowAnonymous]
+    [HttpGet]
+    public async Task<IActionResult> ResetPassword(string token)
+    {
+        if (string.IsNullOrWhiteSpace(token))
+        {
+            TempData["ErrorMessage"] = "Liên kết đặt lại mật khẩu không hợp lệ.";
+            return RedirectToAction(nameof(ForgotPassword));
+        }
+
+        var resetToken = await _context.PasswordResetTokens
+            .FirstOrDefaultAsync(x => x.Token == token && x.UsedAt == null && x.ExpiresAt > DateTime.UtcNow);
+
+        if (resetToken == null)
+        {
+            TempData["ErrorMessage"] = "Liên kết đặt lại mật khẩu đã hết hạn hoặc không tồn tại.";
+            return RedirectToAction(nameof(ForgotPassword));
+        }
+
+        return View(new ResetPasswordViewModel { Token = token });
+    }
+
+    [AllowAnonymous]
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ResetPassword(ResetPasswordViewModel model)
+    {
+        if (!ModelState.IsValid)
+        {
+            return View(model);
+        }
+
+        var resetToken = await _context.PasswordResetTokens
+            .Include(x => x.User)
+            .FirstOrDefaultAsync(x => x.Token == model.Token && x.UsedAt == null && x.ExpiresAt > DateTime.UtcNow);
+
+        if (resetToken == null)
+        {
+            TempData["ErrorMessage"] = "Liên kết đặt lại mật khẩu đã hết hạn hoặc không tồn tại.";
+            return RedirectToAction(nameof(ForgotPassword));
+        }
+
+        resetToken.User.Password = PasswordHelper.HashPassword(model.NewPassword);
+        resetToken.UsedAt = DateTime.UtcNow;
+
+        var otherTokens = await _context.PasswordResetTokens
+            .Where(x => x.UserId == resetToken.UserId && x.Id != resetToken.Id && x.UsedAt == null)
+            .ToListAsync();
+
+        foreach (var item in otherTokens)
+        {
+            item.UsedAt = DateTime.UtcNow;
+        }
+
+        await _context.SaveChangesAsync();
+
+        TempData["SuccessMessage"] = "Đặt lại mật khẩu thành công. Bạn có thể đăng nhập bằng mật khẩu mới.";
+        return RedirectToAction(nameof(Login));
+    }
+
     [Authorize]
     [HttpPost]
     [ValidateAntiForgeryToken]
@@ -160,10 +295,7 @@ public class AccountController : Controller
             new(ClaimTypes.Role, account.Role ?? "customer")
         };
 
-        var identity = new ClaimsIdentity(
-            claims,
-            CookieAuthenticationDefaults.AuthenticationScheme);
-
+        var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
         var principal = new ClaimsPrincipal(identity);
 
         await HttpContext.SignInAsync(
@@ -172,9 +304,7 @@ public class AccountController : Controller
             new AuthenticationProperties
             {
                 IsPersistent = isPersistent,
-                ExpiresUtc = isPersistent
-                    ? DateTimeOffset.UtcNow.AddDays(7)
-                    : null
+                ExpiresUtc = isPersistent ? DateTimeOffset.UtcNow.AddDays(7) : null
             });
     }
 }

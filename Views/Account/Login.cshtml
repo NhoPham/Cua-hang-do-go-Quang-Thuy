@@ -1,31 +1,31 @@
-@model QLBH.ViewModels.LoginViewModel
+@model LoginViewModel
+
 @{
     ViewData["Title"] = "Đăng nhập";
     var returnUrl = ViewData["ReturnUrl"]?.ToString();
 }
 
 <div class="row justify-content-center">
-    <div class="col-md-6 col-lg-5">
-        <div class="card shadow-sm rounded-4 border-0">
+    <div class="col-lg-5 col-md-7">
+        <div class="card shadow-sm border-0 rounded-4">
             <div class="card-body p-4">
-                <h2 class="mb-3 text-center">Đăng nhập</h2>
-                <p class="text-muted text-center">Đăng nhập để quản lý tài khoản và sử dụng các chức năng phù hợp.</p>
+                <h2 class="fw-bold mb-3">Đăng nhập</h2>
+                <p class="text-muted">Đăng nhập để sử dụng giỏ hàng, đặt hàng và theo dõi đơn.</p>
 
                 <form asp-action="Login" method="post">
                     @Html.AntiForgeryToken()
                     <input type="hidden" name="returnUrl" value="@returnUrl" />
-
                     <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
 
                     <div class="mb-3">
                         <label asp-for="UsernameOrEmail" class="form-label"></label>
-                        <input asp-for="UsernameOrEmail" class="form-control" placeholder="Nhập tên đăng nhập hoặc email" />
+                        <input asp-for="UsernameOrEmail" class="form-control" />
                         <span asp-validation-for="UsernameOrEmail" class="text-danger"></span>
                     </div>
 
                     <div class="mb-3">
                         <label asp-for="Password" class="form-label"></label>
-                        <input asp-for="Password" class="form-control" placeholder="Nhập mật khẩu" />
+                        <input asp-for="Password" class="form-control" />
                         <span asp-validation-for="Password" class="text-danger"></span>
                     </div>
 
@@ -37,9 +37,9 @@
                     <button type="submit" class="btn btn-dark w-100">Đăng nhập</button>
                 </form>
 
-                <div class="text-center mt-3">
-                    Chưa có tài khoản?
-                    <a asp-action="Register">Đăng ký ngay</a>
+                <div class="d-flex justify-content-between mt-3 small">
+                    <a asp-action="ForgotPassword">Quên mật khẩu?</a>
+                    <a asp-action="Register">Chưa có tài khoản? Đăng ký</a>
                 </div>
             </div>
         </div>

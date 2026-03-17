@@ -1,5 +1,3 @@
-﻿using System;
-using System.Collections.Generic;
 using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
 
 namespace QLBH.Models;
@@ -13,7 +11,7 @@ public partial class Product
     public string Description { get; set; } = null!;
 
     [ValidateNever]
-    public string Images { get; set; } = null!;
+    public string Images { get; set; } = "[]";
 
     public decimal Price { get; set; }
 
@@ -22,4 +20,10 @@ public partial class Product
     public int? CategoryId { get; set; }
 
     public virtual Category? Category { get; set; }
+
+    public virtual ICollection<CartItem> CartItems { get; set; } = new List<CartItem>();
+
+    public virtual ICollection<OrderItem> OrderItems { get; set; } = new List<OrderItem>();
+
+    public virtual ICollection<InventoryTransaction> InventoryTransactions { get; set; } = new List<InventoryTransaction>();
 }

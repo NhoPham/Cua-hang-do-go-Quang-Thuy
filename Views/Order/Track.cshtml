@@ -1,0 +1,84 @@
+@model TrackOrderViewModel
+
+@{
+    ViewData["Title"] = "Theo dõi đơn hàng";
+}
+
+<h1 class="fw-bold mb-3">Theo dõi đơn hàng</h1>
+<p class="text-muted mb-4">Nhập mã đơn và email để kiểm tra trạng thái đơn.</p>
+
+<div class="card border-0 shadow-sm rounded-4 mb-4">
+    <div class="card-body p-4">
+        <form method="get" class="row g-3">
+            <div class="col-md-5">
+                <label class="form-label">Mã đơn</label>
+                <input name="orderCode" value="@Model.OrderCode" class="form-control" placeholder="Ví dụ: DH202603..." />
+            </div>
+            <div class="col-md-5">
+                <label class="form-label">Email đặt hàng</label>
+                <input name="email" value="@Model.Email" class="form-control" placeholder="Nhập email đã dùng khi đặt hàng" />
+            </div>
+            <div class="col-md-2 d-grid align-items-end">
+                <button class="btn btn-primary">Tra cứu</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@if (Model.HasSearched && Model.Order == null)
+{
+    <div class="alert alert-warning">Không tìm thấy đơn hàng phù hợp với mã đơn và email đã nhập.</div>
+}
+
+@if (Model.Order != null)
+{
+    <div class="card border-0 shadow-sm rounded-4">
+        <div class="card-body p-4">
+            <div class="d-flex flex-column flex-md-row justify-content-between gap-3 mb-3">
+                <div>
+                    <h4 class="fw-bold mb-1">Đơn hàng @Model.Order.OrderCode</h4>
+                    <div class="text-muted">Tạo lúc @Model.Order.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</div>
+                </div>
+                <div class="d-flex gap-2">
+                    <span class="badge @OrderUiHelper.OrderStatusBadgeClass(Model.Order.OrderStatus)">
+                        @OrderUiHelper.OrderStatusLabel(Model.Order.OrderStatus)
+                    </span>
+                    <span class="badge @OrderUiHelper.PaymentStatusBadgeClass(Model.Order.PaymentStatus)">
+                        @OrderUiHelper.PaymentStatusLabel(Model.Order.PaymentStatus)
+                    </span>
+                </div>
+            </div>
+
+            <div class="mb-3"><strong>Người nhận:</strong> @Model.Order.ReceiverName</div>
+            <div class="mb-3"><strong>Địa chỉ:</strong> @Model.Order.ShippingAddress</div>
+
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Sản phẩm</th>
+                            <th class="text-end">SL</th>
+                            <th class="text-end">Đơn giá</th>
+                            <th class="text-end">Thành tiền</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model.Order.Items)
+                        {
+                            <tr>
+                                <td>@item.ProductName</td>
+                                <td class="text-end">@item.Quantity</td>
+                                <td class="text-end">@item.UnitPrice.ToString("N0") đ</td>
+                                <td class="text-end fw-semibold">@item.Subtotal.ToString("N0") đ</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="text-end fs-5 fw-bold text-danger">
+                Tổng tiền: @Model.Order.TotalAmount.ToString("N0") đ
+            </div>
+        </div>
+    </div>
+}

@@ -1,0 +1,131 @@
+@model Order
+
+@{
+    ViewData["Title"] = "Chi tiết đơn hàng";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="fw-bold mb-1">Chi tiết đơn hàng</h1>
+        <p class="text-muted mb-0">Mã đơn: <strong>@Model.OrderCode</strong></p>
+    </div>
+    <a asp-action="@(User.IsInRole("admin") ? "Admin" : "Index")" class="btn btn-outline-dark">Quay lại</a>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-7">
+        <div class="card border-0 shadow-sm rounded-4 mb-4">
+            <div class="card-body p-4">
+                <h4 class="fw-bold mb-3">Sản phẩm trong đơn</h4>
+
+                <div class="table-responsive">
+                    <table class="table align-middle">
+                        <thead>
+                            <tr>
+                                <th>Sản phẩm</th>
+                                <th class="text-end">Đơn giá</th>
+                                <th class="text-center">SL</th>
+                                <th class="text-end">Thành tiền</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in Model.Items)
+                            {
+                                <tr>
+                                    <td>@item.ProductName</td>
+                                    <td class="text-end">@item.UnitPrice.ToString("N0") đ</td>
+                                    <td class="text-center">@item.Quantity</td>
+                                    <td class="text-end fw-semibold">@item.Subtotal.ToString("N0") đ</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="text-end fs-5 fw-bold text-danger">
+                    Tổng tiền: @Model.TotalAmount.ToString("N0") đ
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-5">
+        <div class="card border-0 shadow-sm rounded-4 mb-4">
+            <div class="card-body p-4">
+                <h4 class="fw-bold mb-3">Thông tin đơn hàng</h4>
+                <div class="mb-2"><strong>Người nhận:</strong> @Model.ReceiverName</div>
+                <div class="mb-2"><strong>Email:</strong> @Model.Email</div>
+                <div class="mb-2"><strong>Số điện thoại:</strong> @Model.Phone</div>
+                <div class="mb-2"><strong>Địa chỉ:</strong> @Model.ShippingAddress</div>
+                <div class="mb-2"><strong>Thanh toán:</strong> @OrderUiHelper.PaymentMethodLabel(Model.PaymentMethod)</div>
+                <div class="mb-2">
+                    <strong>Trạng thái thanh toán:</strong>
+                    <span class="badge @OrderUiHelper.PaymentStatusBadgeClass(Model.PaymentStatus)">
+                        @OrderUiHelper.PaymentStatusLabel(Model.PaymentStatus)
+                    </span>
+                </div>
+                <div class="mb-2">
+                    <strong>Trạng thái đơn:</strong>
+                    <span class="badge @OrderUiHelper.OrderStatusBadgeClass(Model.OrderStatus)">
+                        @OrderUiHelper.OrderStatusLabel(Model.OrderStatus)
+                    </span>
+                </div>
+                <div class="mb-2"><strong>Ngày tạo:</strong> @Model.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</div>
+                @if (!string.IsNullOrWhiteSpace(Model.Note))
+                {
+                    <div class="mb-2"><strong>Ghi chú:</strong> @Model.Note</div>
+                }
+            </div>
+        </div>
+
+        @if (User.IsInRole("admin"))
+        {
+            <div class="card border-0 shadow-sm rounded-4">
+                <div class="card-body p-4">
+                    <h4 class="fw-bold mb-3">Cập nhật trạng thái</h4>
+
+                    <form asp-action="UpdateStatus" method="post">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="id" value="@Model.Id" />
+
+                        <div class="mb-3">
+                            <label class="form-label">Trạng thái đơn hàng</label>
+                            <select class="form-select" name="orderStatus">
+                                @foreach (var status in OrderStatuses.All)
+                                {
+                                    if (status == Model.OrderStatus)
+                                    {
+                                        <option value="@status" selected>@OrderUiHelper.OrderStatusLabel(status)</option>
+                                    }
+                                    else
+                                    {
+                                        <option value="@status">@OrderUiHelper.OrderStatusLabel(status)</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Trạng thái thanh toán</label>
+                            <select class="form-select" name="paymentStatus">
+                                @foreach (var status in PaymentStatuses.All)
+                                {
+                                    if (status == Model.PaymentStatus)
+                                    {
+                                        <option value="@status" selected>@OrderUiHelper.PaymentStatusLabel(status)</option>
+                                    }
+                                    else
+                                    {
+                                        <option value="@status">@OrderUiHelper.PaymentStatusLabel(status)</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+
+                        <button class="btn btn-primary" type="submit">Lưu trạng thái</button>
+                    </form>
+                </div>
+            </div>
+        }
+    </div>
+</div>

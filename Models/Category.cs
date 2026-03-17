@@ -1,6 +1,3 @@
-﻿using System;
-using System.Collections.Generic;
-
 namespace QLBH.Models;
 
 public partial class Category

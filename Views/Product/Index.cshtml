@@ -1,102 +1,86 @@
-@model IEnumerable<QLBH.Models.Product>
-@using Newtonsoft.Json
+@model IEnumerable<Product>
 
 @{
     ViewData["Title"] = "Danh sách sản phẩm";
 }
 
-<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
-    <h1 class="mb-0">Danh sách sản phẩm</h1>
-    <div class="d-flex flex-wrap gap-2">
-        <a class="btn btn-primary" asp-action="Create">Thêm sản phẩm</a>
-
-<!--        <form method="post" asp-action="LoadAll" style="display: inline;">
-            @Html.AntiForgeryToken()
-            <button type="submit" class="btn btn-primary">Nạp sản phẩm</button>
-        </form>
--->
-        <form method="post" asp-action="DeleteAll" style="display: inline;">
-            @Html.AntiForgeryToken()
-            <button type="submit" class="btn btn-danger"
-                    onclick="return confirm('Bạn có chắc chắn muốn xóa tất cả sản phẩm?');">
-                Xóa tất cả
-            </button>
-        </form>
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+    <div>
+        <h1 class="fw-bold mb-1">Danh sách sản phẩm</h1>
+        <p class="text-muted mb-0">Chọn sản phẩm phù hợp và thêm ngay vào giỏ hàng.</p>
     </div>
+
+    @if (User.IsInRole("admin"))
+    {
+        <div class="d-flex gap-2">
+            <a asp-action="Create" class="btn btn-dark">Thêm sản phẩm</a>
+            <form asp-action="DeleteAll" method="post">
+                @Html.AntiForgeryToken()
+                <button class="btn btn-outline-danger" type="submit" onclick="return confirm('Xóa toàn bộ sản phẩm?');">Xóa tất cả</button>
+            </form>
+        </div>
+    }
 </div>
 
-<hr />
-
-<form method="get" asp-action="Index" class="row g-3 align-items-center mb-4">
-    <div class="col-md-4">
-        <select class="form-select" name="categoryId" asp-items="ViewBag.CategoryId" onchange="this.form.submit()">
-            <option value="">Tất cả danh mục</option>
-        </select>
-    </div>
-    <div class="col-md-6">
-        <input type="text"
-               name="searchString"
-               class="form-control"
-               placeholder="Tìm kiếm sản phẩm..."
-               value="@ViewContext.HttpContext.Request.Query["searchString"]" />
-    </div>
-    <div class="col-md-2">
-        <button type="submit" class="btn btn-primary w-100">Tìm kiếm</button>
+<form method="get" class="card border-0 shadow-sm rounded-4 mb-4">
+    <div class="card-body row g-3 align-items-end">
+        <div class="col-md-5">
+            <label class="form-label">Từ khóa</label>
+            <input type="text" name="searchString" value="@ViewBag.SearchString" class="form-control" placeholder="Nhập tên sản phẩm..." />
+        </div>
+        <div class="col-md-4">
+            <label class="form-label">Danh mục</label>
+            <select class="form-select" name="categoryId" asp-items="ViewBag.CategoryId">
+                <option value="">Tất cả danh mục</option>
+            </select>
+        </div>
+        <div class="col-md-3 d-grid">
+            <button class="btn btn-primary">Tìm kiếm</button>
+        </div>
     </div>
 </form>
 
-<hr />
-
-<div class="row">
+<div class="row g-4">
     @foreach (var item in Model)
     {
-        List<string> imageList = new();
-
-        if (!string.IsNullOrWhiteSpace(item.Images))
-        {
-            try
-            {
-                imageList = JsonConvert.DeserializeObject<List<string>>(item.Images) ?? new List<string>();
-            }
-            catch
-            {
-                imageList = new List<string> { item.Images };
-            }
-        }
-
-        var firstImage = imageList.Any() ? imageList.First() : "/images/default/no-image.jpg";
-        var imagesJson = System.Text.Json.JsonSerializer.Serialize(imageList);
-
-        <div class="col-12 col-sm-6 col-lg-4 col-xl-3 mb-4">
-            <div class="card h-100 product-card shadow-sm">
-                <a class="card-header text-info text-decoration-none"
-                   asp-action="Details"
-                   asp-route-id="@item.Id"
-                   title="@item.Name">
-                    @item.Name
-                </a>
-
+        var firstImage = ImageHelper.GetFirstImageOrDefault(item.Images);
+        <div class="col-xl-3 col-lg-4 col-md-6">
+            <div class="card h-100 border-0 shadow-sm rounded-4 overflow-hidden">
+                <img src="@firstImage" alt="@item.Name" class="card-img-top product-image" data-product-id="@item.Id" style="height: 220px; object-fit: cover;" />
                 <div class="card-body d-flex flex-column">
-                    <a asp-action="Details" asp-route-id="@item.Id" class="image-wrapper">
-                        <img src="@firstImage"
-                             class="card-img-top product-image auto-slide-img"
-                             alt="Ảnh sản phẩm @item.Name"
-                             data-images='@Html.Raw(imagesJson)' />
-                    </a>
+                    <h5 class="fw-semibold">@item.Name</h5>
+                    <p class="text-muted small mb-2">Tồn kho: @item.Stock</p>
+                    <p class="text-muted flex-grow-1">@(string.IsNullOrWhiteSpace(item.Description) ? "Chưa có mô tả." : item.Description)</p>
+                    <div class="fw-bold fs-5 text-danger mb-3">@item.Price.ToString("N0") đ</div>
 
-                    <p class="card-text product-description mt-3">
-                        @(string.IsNullOrWhiteSpace(item.Description) ? "Chưa có mô tả." : item.Description)
-                    </p>
+                    <div class="d-grid gap-2">
+                        <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-outline-dark">Chi tiết</a>
 
-                    <p class="card-text product-price mb-2">
-                        @String.Format("{0:N0} đ", item.Price)
-                    </p>
+                        @if (User.Identity?.IsAuthenticated == true)
+                        {
+                            <form asp-controller="Cart" asp-action="Add" method="post" class="d-grid">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="productId" value="@item.Id" />
+                                <input type="hidden" name="returnUrl" value="@($"{Context.Request.Path}{Context.Request.QueryString}")" />
+                                <button class="btn btn-primary" type="submit" @(item.Stock <= 0 ? "disabled" : null)>
+                                    @(item.Stock > 0 ? "Thêm vào giỏ" : "Hết hàng")
+                                </button>
+                            </form>
+                        }
+                        else
+                        {
+                            <a asp-controller="Account" asp-action="Login" asp-route-returnUrl="@($"{Context.Request.Path}{Context.Request.QueryString}")" class="btn btn-primary">
+                                Đăng nhập để mua
+                            </a>
+                        }
 
-                    <div class="mt-auto d-flex gap-2">
-                        <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-outline-primary w-50">
-                            Chi tiết
-                        </a>
-                        <a href="#" class="btn btn-primary w-50">Đặt hàng</a>
+                        @if (User.IsInRole("admin"))
+                        {
+                            <div class="d-flex gap-2">
+                                <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-warning w-50">Sửa</a>
+                                <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-danger w-50">Xóa</a>
+                            </div>
+                        }
                     </div>
                 </div>
             </div>
@@ -106,131 +90,73 @@
 
 @if (ViewBag.TotalPages > 1)
 {
-    <nav class="d-flex justify-content-center" aria-label="Page navigation">
-        <ul class="pagination">
-            <li class="page-item">
-                <a class="page-link" href="@Url.Action("Index", new {
-                    page = 1,
-                    searchString = ViewBag.SearchString,
-                    categoryId = ViewBag.SelectedCategoryId
-                })" aria-label="Previous">
-                    <span aria-hidden="true">&laquo;</span>
-                </a>
+    <nav class="mt-4">
+        <ul class="pagination justify-content-center">
+            @{
+                var currentPage = (int)ViewBag.CurrentPage;
+                var totalPages = (int)ViewBag.TotalPages;
+                var searchString = (string?)ViewBag.SearchString;
+                var selectedCategoryId = (int?)ViewBag.SelectedCategoryId;
+            }
+
+            <li class="page-item @(currentPage == 1 ? "disabled" : null)">
+                <a class="page-link" asp-action="Index" asp-route-page="@(currentPage - 1)" asp-route-searchString="@searchString" asp-route-categoryId="@selectedCategoryId">«</a>
             </li>
 
-            @for (int i = 1; i <= ViewBag.TotalPages; i++)
+            @for (var i = 1; i <= totalPages; i++)
             {
-                <li class="page-item @(ViewBag.CurrentPage == i ? "active" : "")">
-                    <a class="page-link" href="@Url.Action("Index", new {
-                        page = i,
-                        searchString = ViewBag.SearchString,
-                        categoryId = ViewBag.SelectedCategoryId
-                    })">
-                        @i
-                    </a>
+                <li class="page-item @(i == currentPage ? "active" : null)">
+                    <a class="page-link" asp-action="Index" asp-route-page="@i" asp-route-searchString="@searchString" asp-route-categoryId="@selectedCategoryId">@i</a>
                 </li>
             }
 
-            <li class="page-item">
-                <a class="page-link" href="@Url.Action("Index", new {
-                    page = ViewBag.TotalPages,
-                    searchString = ViewBag.SearchString,
-                    categoryId = ViewBag.SelectedCategoryId
-                })" aria-label="Next">
-                    <span aria-hidden="true">&raquo;</span>
-                </a>
+            <li class="page-item @(currentPage == totalPages ? "disabled" : null)">
+                <a class="page-link" asp-action="Index" asp-route-page="@(currentPage + 1)" asp-route-searchString="@searchString" asp-route-categoryId="@selectedCategoryId">»</a>
             </li>
         </ul>
     </nav>
 }
 
-<style>
-    .card-header {
-        font-size: 1.2rem;
-        font-weight: 600;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        display: block;
-        max-width: 100%;
-        background-color: #f8f9fa;
+@using System.Text.Json
+
+@{
+    var imageMap = new Dictionary<string, List<string>>();
+
+    foreach (var p in Model)
+    {
+        imageMap[p.Id.ToString()] = string.IsNullOrWhiteSpace(p.Images)
+            ? new List<string>()
+            : p.Images
+                .Split(',', StringSplitOptions.RemoveEmptyEntries)
+                .Select(x => x.Trim())
+                .Where(x => !string.IsNullOrWhiteSpace(x))
+                .ToList();
     }
 
-    .product-card {
-        border-radius: 12px;
-        overflow: hidden;
-    }
+    var imagesJson = JsonSerializer.Serialize(imageMap);
+}
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        document.querySelectorAll(".product-image").forEach(img => {
+            const raw = img.dataset.images;
+            if (!raw) return;
 
-    .image-wrapper {
-        display: block;
-    }
+            let productImages = [];
 
-    .product-image {
-        width: 100%;
-        height: 220px;
-        object-fit: cover;
-        border-radius: 8px;
-        transition: opacity 0.5s ease-in-out;
-        background: #f5f5f5;
-    }
+            try {
+                productImages = JSON.parse(raw);
+            } catch {
+                return;
+            }
 
-    .product-image.fade-out {
-        opacity: 0.35;
-    }
-
-    .product-description {
-        min-height: 72px;
-        font-size: 0.95rem;
-        color: #555;
-        overflow: hidden;
-        display: -webkit-box;
-        -webkit-line-clamp: 3;
-        -webkit-box-orient: vertical;
-    }
-
-    .product-price {
-        font-size: 1.1rem;
-        font-weight: 700;
-        color: #c0392b;
-    }
-
-    .page-item .page-link {
-        border: none;
-    }
-
-    .page-item {
-        margin: 0 6px;
-    }
-</style>
-
-@section Scripts {
-    <script>
-        document.addEventListener("DOMContentLoaded", function () {
-            const imageElements = document.querySelectorAll(".auto-slide-img");
-
-            imageElements.forEach(img => {
-                let imageList = [];
-
-                try {
-                    imageList = JSON.parse(img.dataset.images || "[]");
-                } catch {
-                    imageList = [];
-                }
-
-                if (!imageList || imageList.length <= 1) return;
-
+            if (productImages && productImages.length > 1) {
                 let currentIndex = 0;
 
                 setInterval(() => {
-                    img.classList.add("fade-out");
-
-                    setTimeout(() => {
-                        currentIndex = (currentIndex + 1) % imageList.length;
-                        img.src = imageList[currentIndex];
-                        img.classList.remove("fade-out");
-                    }, 250);
+                    currentIndex = (currentIndex + 1) % productImages.length;
+                    img.src = productImages[currentIndex];
                 }, 3000);
-            });
+            }
         });
-    </script>
-}
+    });
+</script>
