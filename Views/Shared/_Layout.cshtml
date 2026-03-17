@@ -1,3 +1,24 @@
+@using Microsoft.EntityFrameworkCore
+@using QLBH.Utils
+@inject QLBH.Models.QlbhContext DbContext
+
+@{
+    var cartCount = 0;
+
+    // ===== ĐÃ SỬA: tính tổng số lượng sản phẩm trong giỏ =====
+    if (User.Identity?.IsAuthenticated == true)
+    {
+        var userId = User.GetUserId();
+
+        if (userId.HasValue)
+        {
+            cartCount = await DbContext.CartItems
+                .Where(x => x.UserId == userId.Value)
+                .SumAsync(x => (int?)x.Quantity) ?? 0;
+        }
+    }
+}
+
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -13,37 +34,128 @@
             <div class="container">
                 <a class="navbar-brand fw-semibold" asp-controller="Home" asp-action="Index">Đồ Gỗ Quảng Thủy</a>
 
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavbar">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
+                @* ===== ĐÃ SỬA: cụm mobile bên phải gồm giỏ hàng + nút 3 gạch ===== *@
+                <div class="d-flex align-items-center gap-2 ms-auto d-lg-none">
+                    @if (User.Identity?.IsAuthenticated == true)
+                    {
+                        <a asp-controller="Cart"
+                           asp-action="Index"
+                           class="btn btn-outline-light position-relative rounded-circle d-inline-flex align-items-center justify-content-center"
+                           style="width: 42px; height: 42px;"
+                           title="Giỏ hàng">
+
+                            <svg xmlns="http://www.w3.org/2000/svg"
+                                 width="20"
+                                 height="20"
+                                 fill="currentColor"
+                                 viewBox="0 0 16 16"
+                                 aria-hidden="true">
+                                <path d="M0 1.5A.5.5 0 0 1 .5 1H2a.5.5 0 0 1 .49.402L2.89 3H14.5a.5.5 0 0 1 .49.598l-1.5 7A.5.5 0 0 1 13 11H4a.5.5 0 0 1-.49-.402L1.61 2H.5A.5.5 0 0 1 0 1.5M3.102 4l1.313 6h8.183l1.286-6z" />
+                                <path d="M5 12a2 2 0 1 0 0 4 2 2 0 0 0 0-4m0 1a1 1 0 1 1 0 2 1 1 0 0 1 0-2m7-1a2 2 0 1 0 0 4 2 2 0 0 0 0-4m0 1a1 1 0 1 1 0 2 1 1 0 0 1 0-2" />
+                            </svg>
+
+                            @if (cartCount > 0)
+                            {
+                                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-warning text-dark">
+                                    @cartCount
+                                </span>
+                            }
+                        </a>
+                    }
+
+                    <button class="navbar-toggler"
+                            type="button"
+                            data-bs-toggle="collapse"
+                            data-bs-target="#mainNavbar"
+                            aria-controls="mainNavbar"
+                            aria-expanded="false"
+                            aria-label="Chuyển đổi điều hướng">
+                        <span class="navbar-toggler-icon"></span>
+                    </button>
+                </div>
 
                 <div class="collapse navbar-collapse" id="mainNavbar">
                     <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                        <li class="nav-item"><a class="nav-link" asp-controller="Home" asp-action="Index">Trang chủ</a></li>
-                        <li class="nav-item"><a class="nav-link" asp-controller="Product" asp-action="Index">Sản phẩm</a></li>
-                        <li class="nav-item"><a class="nav-link" asp-controller="Order" asp-action="Track">Theo dõi đơn</a></li>
+                        <li class="nav-item">
+                            <a class="nav-link" asp-controller="Home" asp-action="Index">Trang chủ</a>
+                        </li>
+
+                        <li class="nav-item">
+                            <a class="nav-link" asp-controller="Product" asp-action="Index">Sản phẩm</a>
+                        </li>
+
+                        <li class="nav-item">
+                            <a class="nav-link" asp-controller="Order" asp-action="Track">Theo dõi đơn</a>
+                        </li>
 
                         @if (User.Identity?.IsAuthenticated == true)
                         {
-                            <li class="nav-item"><a class="nav-link" asp-controller="Cart" asp-action="Index">Giỏ hàng</a></li>
-                            <li class="nav-item"><a class="nav-link" asp-controller="Order" asp-action="Index">Đơn của tôi</a></li>
+                            <li class="nav-item">
+                                <a class="nav-link" asp-controller="Order" asp-action="Index">Đơn của tôi</a>
+                            </li>
+
+                            @* ===== ĐÃ SỬA: thêm link giỏ hàng dạng chữ trong menu mobile/collapse nếu muốn bấm từ menu ===== *@
+                            <li class="nav-item d-lg-none">
+                                <a class="nav-link" asp-controller="Cart" asp-action="Index">Giỏ hàng (@cartCount)</a>
+                            </li>
                         }
 
                         @if (User.IsInRole("admin"))
                         {
-                            <li class="nav-item"><a class="nav-link" asp-controller="Order" asp-action="Admin">Quản lý đơn</a></li>
-                            <li class="nav-item"><a class="nav-link" asp-controller="Inventory" asp-action="Index">Kho</a></li>
-                            <li class="nav-item"><a class="nav-link" asp-controller="Statistics" asp-action="Index">Thống kê</a></li>
-                            <li class="nav-item"><a class="nav-link" asp-controller="Product" asp-action="Create">Thêm sản phẩm</a></li>
+                            <li class="nav-item">
+                                <a class="nav-link" asp-controller="Order" asp-action="Admin">Quản lý đơn</a>
+                            </li>
+
+                            <li class="nav-item">
+                                <a class="nav-link" asp-controller="Inventory" asp-action="Index">Kho</a>
+                            </li>
+
+                            <li class="nav-item">
+                                <a class="nav-link" asp-controller="Statistics" asp-action="Index">Thống kê</a>
+                            </li>
+
+                            <li class="nav-item">
+                                <a class="nav-link" asp-controller="Product" asp-action="Create">Thêm sản phẩm</a>
+                            </li>
                         }
                     </ul>
 
-                    <ul class="navbar-nav ms-auto align-items-lg-center">
+                    @* ===== ĐÃ SỬA: cụm desktop bên phải, ẩn ở mobile ===== *@
+                    <ul class="navbar-nav ms-auto align-items-lg-center gap-lg-2 d-none d-lg-flex">
                         @if (User.Identity?.IsAuthenticated == true)
                         {
-                            <li class="nav-item me-lg-3">
-                                <span class="navbar-text">Xin chào, <strong>@User.Identity.Name</strong></span>
+                            <li class="nav-item me-lg-2">
+                                <a asp-controller="Cart"
+                                   asp-action="Index"
+                                   class="btn btn-outline-light position-relative rounded-circle d-inline-flex align-items-center justify-content-center"
+                                   style="width: 42px; height: 42px;"
+                                   title="Giỏ hàng">
+
+                                    <svg xmlns="http://www.w3.org/2000/svg"
+                                         width="20"
+                                         height="20"
+                                         fill="currentColor"
+                                         viewBox="0 0 16 16"
+                                         aria-hidden="true">
+                                        <path d="M0 1.5A.5.5 0 0 1 .5 1H2a.5.5 0 0 1 .49.402L2.89 3H14.5a.5.5 0 0 1 .49.598l-1.5 7A.5.5 0 0 1 13 11H4a.5.5 0 0 1-.49-.402L1.61 2H.5A.5.5 0 0 1 0 1.5M3.102 4l1.313 6h8.183l1.286-6z" />
+                                        <path d="M5 12a2 2 0 1 0 0 4 2 2 0 0 0 0-4m0 1a1 1 0 1 1 0 2 1 1 0 0 1 0-2m7-1a2 2 0 1 0 0 4 2 2 0 0 0 0-4m0 1a1 1 0 1 1 0 2 1 1 0 0 1 0-2" />
+                                    </svg>
+
+                                    @if (cartCount > 0)
+                                    {
+                                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-warning text-dark">
+                                            @cartCount
+                                        </span>
+                                    }
+                                </a>
                             </li>
+
+                            <li class="nav-item me-lg-2">
+                                <span class="navbar-text">
+                                    Xin chào, <strong>@User.Identity.Name</strong>
+                                </span>
+                            </li>
+
                             <li class="nav-item">
                                 <form asp-controller="Account" asp-action="Logout" method="post" class="d-inline">
                                     @Html.AntiForgeryToken()
@@ -53,8 +165,42 @@
                         }
                         else
                         {
-                            <li class="nav-item me-2"><a class="btn btn-outline-light btn-sm" asp-controller="Account" asp-action="Login">Đăng nhập</a></li>
-                            <li class="nav-item"><a class="btn btn-warning btn-sm" asp-controller="Account" asp-action="Register">Đăng ký</a></li>
+                            <li class="nav-item me-2">
+                                <a class="btn btn-outline-light btn-sm" asp-controller="Account" asp-action="Login">Đăng nhập</a>
+                            </li>
+
+                            <li class="nav-item">
+                                <a class="btn btn-warning btn-sm" asp-controller="Account" asp-action="Register">Đăng ký</a>
+                            </li>
+                        }
+                    </ul>
+
+                    @* ===== ĐÃ SỬA: cụm tài khoản mobile nằm trong menu xổ xuống ===== *@
+                    <ul class="navbar-nav mt-3 d-lg-none">
+                        @if (User.Identity?.IsAuthenticated == true)
+                        {
+                            <li class="nav-item">
+                                <span class="navbar-text d-block mb-2">
+                                    Xin chào, <strong>@User.Identity.Name</strong>
+                                </span>
+                            </li>
+
+                            <li class="nav-item">
+                                <form asp-controller="Account" asp-action="Logout" method="post" class="d-inline">
+                                    @Html.AntiForgeryToken()
+                                    <button type="submit" class="btn btn-outline-light btn-sm">Đăng xuất</button>
+                                </form>
+                            </li>
+                        }
+                        else
+                        {
+                            <li class="nav-item mb-2">
+                                <a class="btn btn-outline-light btn-sm w-100" asp-controller="Account" asp-action="Login">Đăng nhập</a>
+                            </li>
+
+                            <li class="nav-item">
+                                <a class="btn btn-warning btn-sm w-100" asp-controller="Account" asp-action="Register">Đăng ký</a>
+                            </li>
                         }
                     </ul>
                 </div>

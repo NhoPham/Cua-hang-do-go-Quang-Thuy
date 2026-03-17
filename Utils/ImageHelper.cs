@@ -17,26 +17,18 @@ public static class ImageHelper
         {
             if (normalized.StartsWith("["))
             {
-                var jsonImages = JsonSerializer.Deserialize<List<string>>(normalized) ?? new List<string>();
-
-                return jsonImages
-                    .Where(x => !string.IsNullOrWhiteSpace(x))
-                    .Select(x => x.Trim())
-                    .ToList();
+                return JsonSerializer.Deserialize<List<string>>(normalized) ?? new List<string>();
             }
         }
         catch
         {
         }
 
-        var images = normalized
-            .Split(new[] { ',', ';', '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-            .Where(x => !string.IsNullOrWhiteSpace(x))
-            .ToList();
-
-        if (images.Any())
+        if (normalized.Contains(','))
         {
-            return images;
+            return normalized
+                .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                .ToList();
         }
 
         return new List<string> { normalized };

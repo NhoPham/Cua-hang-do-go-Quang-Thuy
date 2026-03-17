@@ -9,7 +9,7 @@
 <div class="row g-4">
     <div class="col-lg-6">
         <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
-            <img id="mainImage" src="@mainImage" alt="@Model.Name" class="w-100" style="height: 420px; object-fit: cover;" />
+            <img src="@mainImage" alt="@Model.Name" class="w-100" style="height: 420px; object-fit: cover;" />
         </div>
 
         @if (imageList.Count > 1)
@@ -18,7 +18,7 @@
                 @foreach (var img in imageList)
                 {
                     <div class="col">
-                        <img src="@img" alt="Ảnh sản phẩm" class="img-fluid rounded-3 border thumbnail-img" style="height: 90px; width: 100%; object-fit: cover; cursor: pointer;" />
+                        <img src="@img" alt="Ảnh sản phẩm" class="img-fluid rounded-3 border" style="height: 90px; width: 100%; object-fit: cover;" />
                     </div>
                 }
             </div>
@@ -26,7 +26,6 @@
     </div>
 
     <div class="col-lg-6">
-        <!-- Phần card không thay đổi -->
         <div class="card border-0 shadow-sm rounded-4">
             <div class="card-body p-4">
                 <div class="text-muted mb-2">Danh mục: @(Model.Category?.Name ?? "Chưa phân loại")</div>
@@ -82,26 +81,17 @@
         </div>
     </div>
 </div>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const images = document.querySelectorAll('.row-cols-4 .col img');
+        const mainImage = document.querySelector('.col-lg-6:first-child img');
+        let currentIndex = 0;
 
-@section Scripts {
-    <script>
-        let currentImageIndex = 0;
-        const thumbnails = document.querySelectorAll('.thumbnail-img');
-        const mainImage = document.getElementById('mainImage');
-        const totalImages = thumbnails.length;
-
-        if (totalImages > 1) {
-            setInterval(() => {
-                currentImageIndex = (currentImageIndex + 1) % totalImages;
-                mainImage.src = thumbnails[currentImageIndex].src;
+        if (images.length > 1) {
+            setInterval(function() {
+                currentIndex = (currentIndex + 1) % images.length;
+                mainImage.src = images[currentIndex].src;
             }, 3000);
         }
-
-        thumbnails.forEach((thumb, index) => {
-            thumb.addEventListener('click', () => {
-                currentImageIndex = index;
-                mainImage.src = thumb.src;
-            });
-        });
-    </script>
-}
+    });
+</script>

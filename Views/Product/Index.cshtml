@@ -1,7 +1,27 @@
 @model IEnumerable<Product>
+@using System.Text.Json
+@using QLBH.Utils
 
 @{
     ViewData["Title"] = "Danh sách sản phẩm";
+
+    // ===== ĐÃ SỬA: lấy giá trị filter để giữ lại trên form =====
+    var searchName = ViewBag.SearchName as string;
+    var selectedCategoryId = ViewBag.SelectedCategoryId;
+    var minPrice = ViewBag.MinPrice;
+    var maxPrice = ViewBag.MaxPrice;
+    var sortPrice = ViewBag.SortPrice as string;
+    var stockStatus = ViewBag.StockStatus as string;
+
+    // ===== ĐÃ SỬA: nếu đang có filter thì tự mở khối lọc nâng cao =====
+    var hasAdvancedFilter =
+        selectedCategoryId != null ||
+        minPrice != null ||
+        maxPrice != null ||
+        !string.IsNullOrWhiteSpace(sortPrice) ||
+        !string.IsNullOrWhiteSpace(stockStatus);
+
+    var filterCollapseClass = hasAdvancedFilter ? "collapse show" : "collapse";
 }
 
 <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
@@ -13,48 +33,213 @@
     @if (User.IsInRole("admin"))
     {
         <div class="d-flex gap-2">
-            <a asp-action="Create" class="btn btn-dark">Thêm sản phẩm</a>
             <form asp-action="DeleteAll" method="post">
                 @Html.AntiForgeryToken()
-                <button class="btn btn-outline-danger" type="submit" onclick="return confirm('Xóa toàn bộ sản phẩm?');">Xóa tất cả</button>
+                <button class="btn btn-outline-danger" type="submit" onclick="return confirm('Xóa toàn bộ sản phẩm?');">
+                    Xóa tất cả
+                </button>
             </form>
         </div>
     }
 </div>
 
+@* ===== ĐÃ SỬA: ô tìm kiếm kiểu thanh ngang + 2 nút tròn như hình ===== *@
 <form method="get" class="card border-0 shadow-sm rounded-4 mb-4">
-    <div class="card-body row g-3 align-items-end">
-        <div class="col-md-5">
-            <label class="form-label">Từ khóa</label>
-            <input type="text" name="searchString" value="@ViewBag.SearchString" class="form-control" placeholder="Nhập tên sản phẩm..." />
+    <div class="card-body p-3 p-md-4">
+        <div class="d-flex align-items-center gap-2 gap-md-3 flex-wrap flex-md-nowrap">
+            <div class="flex-grow-1">
+            <input type="text"
+                   name="searchName"
+                   value="@searchName"
+                   class="form-control rounded-pill px-4"
+                   placeholder="Nhập tên sản phẩm cần tìm..."
+                   style="height: 52px;" />
+            </div>
+
+            @* ===== ĐÃ SỬA: nút tìm kiếm icon kính lúp ===== *@
+            <button type="submit"
+                class="btn btn-primary rounded-circle d-inline-flex align-items-center justify-content-center flex-shrink-0"
+                style="width: 52px; height: 52px;"
+                title="Tìm kiếm">
+            <svg xmlns="http://www.w3.org/2000/svg"
+                 width="20"
+                 height="20"
+                 fill="currentColor"
+                 viewBox="0 0 16 16"
+                 aria-hidden="true">
+                <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.867-3.834zm-5.242.656a5 5 0 1 1 0-10 5 5 0 0 1 0 10" />
+            </svg>
+            </button>
+
+            @* ===== ĐÃ SỬA: nút bộ lọc icon phễu luôn màu xanh dương ===== *@
+            <button type="button"
+                class="btn btn-primary rounded-circle d-inline-flex align-items-center justify-content-center flex-shrink-0"
+                style="width: 52px; height: 52px;"
+                data-bs-toggle="collapse"
+                data-bs-target="#advancedFilters"
+                aria-expanded="@(hasAdvancedFilter ? "true" : "false")"
+                aria-controls="advancedFilters"
+                title="Bộ lọc">
+            <svg xmlns="http://www.w3.org/2000/svg"
+                 width="20"
+                 height="20"
+                 fill="currentColor"
+                 viewBox="0 0 16 16"
+                 aria-hidden="true">
+                <path d="M1.5 1.5A.5.5 0 0 1 2 1h12a.5.5 0 0 1 .39.812L10 7.333V12.5a.5.5 0 0 1-.223.416l-2 1.333A.5.5 0 0 1 7 13.833V7.333L1.61 1.812A.5.5 0 0 1 1.5 1.5" />
+            </svg>
+            </button>
         </div>
-        <div class="col-md-4">
-            <label class="form-label">Danh mục</label>
-            <select class="form-select" name="categoryId" asp-items="ViewBag.CategoryId">
-                <option value="">Tất cả danh mục</option>
-            </select>
-        </div>
-        <div class="col-md-3 d-grid">
-            <button class="btn btn-primary">Tìm kiếm</button>
+
+        @* ===== ĐÃ SỬA: khối lọc nâng cao ẩn/hiện bằng nút filter ===== *@
+        <div id="advancedFilters" class="@filterCollapseClass">
+            <hr class="my-4" />
+
+            <div class="row g-3">
+                <div class="col-lg-3 col-md-6">
+                    <label class="form-label fw-semibold">Danh mục</label>
+                    <select class="form-select rounded-3" name="categoryId" asp-items="ViewBag.CategoryId">
+                        <option value="">Tất cả danh mục</option>
+                    </select>
+                </div>
+
+                <div class="col-lg-2 col-md-6">
+                    <label class="form-label fw-semibold">Giá từ</label>
+                    <input type="number"
+                           name="minPrice"
+                           value="@minPrice"
+                           class="form-control rounded-3"
+                           min="0"
+                           step="1000"
+                           placeholder="0" />
+                </div>
+
+                <div class="col-lg-2 col-md-6">
+                    <label class="form-label fw-semibold">Đến giá</label>
+                    <input type="number"
+                           name="maxPrice"
+                           value="@maxPrice"
+                           class="form-control rounded-3"
+                           min="0"
+                           step="1000"
+                           placeholder="1000000" />
+                </div>
+
+                <div class="col-lg-2 col-md-6">
+                    <label class="form-label fw-semibold">Sắp xếp giá</label>
+                    <select name="sortPrice" class="form-select rounded-3">
+                        <option value="">Mặc định</option>
+                        <option value="price_asc" selected="@(sortPrice == "price_asc")">Giá tăng dần</option>
+                        <option value="price_desc" selected="@(sortPrice == "price_desc")">Giá giảm dần</option>
+                    </select>
+                </div>
+
+                <div class="col-lg-2 col-md-6">
+                    <label class="form-label fw-semibold">Tình trạng hàng</label>
+                    <select name="stockStatus" class="form-select rounded-3">
+                        <option value="">Tất cả</option>
+                        <option value="in" selected="@(stockStatus == "in")">Còn hàng</option>
+                        <option value="out" selected="@(stockStatus == "out")">Hết hàng</option>
+                    </select>
+                </div>
+
+                <div class="col-lg-1 col-md-12 d-grid">
+                    <label class="form-label fw-semibold d-none d-lg-block">&nbsp;</label>
+                    <button class="btn btn-primary rounded-3" type="submit">
+                        Lọc
+                    </button>
+                </div>
+            </div>
+
+            <div class="mt-3 d-flex flex-wrap gap-2">
+                <a asp-action="Index" class="btn btn-outline-secondary rounded-3">
+                    Đặt lại bộ lọc
+                </a>
+            </div>
         </div>
     </div>
 </form>
 
+<div class="d-flex flex-wrap gap-2 mb-4">
+    @if (!string.IsNullOrWhiteSpace(searchName))
+    {
+        <span class="badge bg-light text-dark border px-3 py-2">Tên: @searchName</span>
+    }
+
+    @if (selectedCategoryId != null)
+    {
+        <span class="badge bg-light text-dark border px-3 py-2">Đã chọn danh mục</span>
+    }
+
+    @if (minPrice != null)
+    {
+        <span class="badge bg-light text-dark border px-3 py-2">Từ giá: @string.Format("{0:N0}", minPrice) đ</span>
+    }
+
+    @if (maxPrice != null)
+    {
+        <span class="badge bg-light text-dark border px-3 py-2">Đến giá: @string.Format("{0:N0}", maxPrice) đ</span>
+    }
+
+    @if (sortPrice == "price_asc")
+    {
+        <span class="badge bg-light text-dark border px-3 py-2">Giá tăng dần</span>
+    }
+    else if (sortPrice == "price_desc")
+    {
+        <span class="badge bg-light text-dark border px-3 py-2">Giá giảm dần</span>
+    }
+
+    @if (stockStatus == "in")
+    {
+        <span class="badge bg-success-subtle text-success border px-3 py-2">Còn hàng</span>
+    }
+    else if (stockStatus == "out")
+    {
+        <span class="badge bg-danger-subtle text-danger border px-3 py-2">Hết hàng</span>
+    }
+</div>
+
 <div class="row g-4">
     @foreach (var item in Model)
     {
-        var firstImage = ImageHelper.GetFirstImageOrDefault(item.Images);
+        var imageList = ImageHelper.GetImageList(item.Images);
+
+        if (!imageList.Any())
+        {
+            imageList = new List<string> { "/images/default/no-image.jpg" };
+        }
+
+        var firstImage = imageList.First();
+        var imagesJson = JsonSerializer.Serialize(imageList);
+
         <div class="col-xl-3 col-lg-4 col-md-6">
             <div class="card h-100 border-0 shadow-sm rounded-4 overflow-hidden">
-                <img src="@firstImage" alt="@item.Name" class="card-img-top product-image" data-product-id="@item.Id" style="height: 220px; object-fit: cover;" />
+                <img src="@firstImage"
+                     alt="@item.Name"
+                     class="card-img-top product-image"
+                     data-images='@Html.Raw(imagesJson)'
+                     style="height: 220px; object-fit: cover;" />
+
                 <div class="card-body d-flex flex-column">
                     <h5 class="fw-semibold">@item.Name</h5>
-                    <p class="text-muted small mb-2">Tồn kho: @item.Stock</p>
-                    <p class="text-muted flex-grow-1">@(string.IsNullOrWhiteSpace(item.Description) ? "Chưa có mô tả." : item.Description)</p>
-                    <div class="fw-bold fs-5 text-danger mb-3">@item.Price.ToString("N0") đ</div>
+
+                    <p class="text-muted small mb-2">
+                        Số lượng hàng: @item.Stock
+                    </p>
+
+                    <p class="text-muted flex-grow-1">
+                        @(string.IsNullOrWhiteSpace(item.Description) ? "Chưa có mô tả." : item.Description)
+                    </p>
+
+                    <div class="fw-bold fs-5 text-danger mb-3">
+                        @item.Price.ToString("N0") đ
+                    </div>
 
                     <div class="d-grid gap-2">
-                        <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-outline-dark">Chi tiết</a>
+                        <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-outline-dark">
+                            Chi tiết
+                        </a>
 
                         @if (User.Identity?.IsAuthenticated == true)
                         {
@@ -69,7 +254,10 @@
                         }
                         else
                         {
-                            <a asp-controller="Account" asp-action="Login" asp-route-returnUrl="@($"{Context.Request.Path}{Context.Request.QueryString}")" class="btn btn-primary">
+                            <a asp-controller="Account"
+                               asp-action="Login"
+                               asp-route-returnUrl="@($"{Context.Request.Path}{Context.Request.QueryString}")"
+                               class="btn btn-primary">
                                 Đăng nhập để mua
                             </a>
                         }
@@ -88,6 +276,19 @@
     }
 </div>
 
+@if (!Model.Any())
+{
+    <div class="card border-0 shadow-sm rounded-4 mt-4">
+        <div class="card-body text-center py-5">
+            <h5 class="fw-bold mb-2">Không tìm thấy sản phẩm phù hợp</h5>
+            <p class="text-muted mb-3">Hãy thử đổi từ khóa, khoảng giá hoặc bộ lọc khác.</p>
+            <a asp-action="Index" class="btn btn-outline-secondary rounded-3">
+                Xóa bộ lọc
+            </a>
+        </div>
+    </div>
+}
+
 @if (ViewBag.TotalPages > 1)
 {
     <nav class="mt-4">
@@ -95,68 +296,71 @@
             @{
                 var currentPage = (int)ViewBag.CurrentPage;
                 var totalPages = (int)ViewBag.TotalPages;
-                var searchString = (string?)ViewBag.SearchString;
-                var selectedCategoryId = (int?)ViewBag.SelectedCategoryId;
             }
 
             <li class="page-item @(currentPage == 1 ? "disabled" : null)">
-                <a class="page-link" asp-action="Index" asp-route-page="@(currentPage - 1)" asp-route-searchString="@searchString" asp-route-categoryId="@selectedCategoryId">«</a>
+                <a class="page-link"
+                   asp-action="Index"
+                   asp-route-page="@(currentPage - 1)"
+                   asp-route-searchName="@searchName"
+                   asp-route-categoryId="@selectedCategoryId"
+                   asp-route-minPrice="@minPrice"
+                   asp-route-maxPrice="@maxPrice"
+                   asp-route-sortPrice="@sortPrice"
+                   asp-route-stockStatus="@stockStatus">«</a>
             </li>
 
             @for (var i = 1; i <= totalPages; i++)
             {
                 <li class="page-item @(i == currentPage ? "active" : null)">
-                    <a class="page-link" asp-action="Index" asp-route-page="@i" asp-route-searchString="@searchString" asp-route-categoryId="@selectedCategoryId">@i</a>
+                    <a class="page-link"
+                       asp-action="Index"
+                       asp-route-page="@i"
+                       asp-route-searchName="@searchName"
+                       asp-route-categoryId="@selectedCategoryId"
+                       asp-route-minPrice="@minPrice"
+                       asp-route-maxPrice="@maxPrice"
+                       asp-route-sortPrice="@sortPrice"
+                       asp-route-stockStatus="@stockStatus">@i</a>
                 </li>
             }
 
             <li class="page-item @(currentPage == totalPages ? "disabled" : null)">
-                <a class="page-link" asp-action="Index" asp-route-page="@(currentPage + 1)" asp-route-searchString="@searchString" asp-route-categoryId="@selectedCategoryId">»</a>
+                <a class="page-link"
+                   asp-action="Index"
+                   asp-route-page="@(currentPage + 1)"
+                   asp-route-searchName="@searchName"
+                   asp-route-categoryId="@selectedCategoryId"
+                   asp-route-minPrice="@minPrice"
+                   asp-route-maxPrice="@maxPrice"
+                   asp-route-sortPrice="@sortPrice"
+                   asp-route-stockStatus="@stockStatus">»</a>
             </li>
         </ul>
     </nav>
 }
 
-@using System.Text.Json
-
-@{
-    var imageMap = new Dictionary<string, List<string>>();
-
-    foreach (var p in Model)
-    {
-        imageMap[p.Id.ToString()] = string.IsNullOrWhiteSpace(p.Images)
-            ? new List<string>()
-            : p.Images
-                .Split(',', StringSplitOptions.RemoveEmptyEntries)
-                .Select(x => x.Trim())
-                .Where(x => !string.IsNullOrWhiteSpace(x))
-                .ToList();
-    }
-
-    var imagesJson = JsonSerializer.Serialize(imageMap);
-}
 <script>
-    document.addEventListener("DOMContentLoaded", function () {
-        document.querySelectorAll(".product-image").forEach(img => {
-            const raw = img.dataset.images;
-            if (!raw) return;
+    document.addEventListener('DOMContentLoaded', function () {
+        const productImages = document.querySelectorAll('.product-image');
 
-            let productImages = [];
+        productImages.forEach(function (img) {
+            let imageList = [];
 
             try {
-                productImages = JSON.parse(raw);
-            } catch {
-                return;
+                imageList = JSON.parse(img.dataset.images || '[]');
+            } catch (error) {
+                imageList = [];
             }
 
-            if (productImages && productImages.length > 1) {
-                let currentIndex = 0;
+            if (!imageList || imageList.length <= 1) return;
 
-                setInterval(() => {
-                    currentIndex = (currentIndex + 1) % productImages.length;
-                    img.src = productImages[currentIndex];
-                }, 3000);
-            }
+            let currentIndex = 0;
+
+            setInterval(function () {
+                currentIndex = (currentIndex + 1) % imageList.length;
+                img.src = imageList[currentIndex];
+            }, 3000);
         });
     });
 </script>

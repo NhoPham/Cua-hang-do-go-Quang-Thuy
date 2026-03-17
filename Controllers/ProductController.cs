@@ -18,27 +18,89 @@ public class ProductController : Controller
     }
 
     [AllowAnonymous]
-    public async Task<IActionResult> Index(string? searchString, int? categoryId, int page = 1)
+    public async Task<IActionResult> Index(
+        string? searchName,
+        int? categoryId,
+        decimal? minPrice,
+        decimal? maxPrice,
+        string? sortPrice,
+        string? stockStatus,
+        int page = 1)
     {
+        // ===== ĐÃ SỬA: thêm các bộ lọc mới =====
         const int pageSize = 8;
 
+        if (page < 1)
+        {
+            page = 1;
+        }
+
+        if (minPrice.HasValue && maxPrice.HasValue && minPrice > maxPrice)
+        {
+            var temp = minPrice;
+            minPrice = maxPrice;
+            maxPrice = temp;
+        }
+
         var products = _context.Products.AsQueryable();
+
+        // ===== ĐÃ SỬA: tìm kiếm theo tên không phân biệt hoa thường =====
+        if (!string.IsNullOrWhiteSpace(searchName))
+        {
+            var keyword = searchName.Trim().ToLower();
+            products = products.Where(p => p.Name.ToLower().Contains(keyword));
+        }
 
         if (categoryId.HasValue)
         {
             products = products.Where(p => p.CategoryId == categoryId.Value);
         }
 
-        if (!string.IsNullOrWhiteSpace(searchString))
+        if (minPrice.HasValue)
         {
-            products = products.Where(p => p.Name.Contains(searchString));
+            products = products.Where(p => p.Price >= minPrice.Value);
         }
+
+        if (maxPrice.HasValue)
+        {
+            products = products.Where(p => p.Price <= maxPrice.Value);
+        }
+
+        // ===== ĐÃ SỬA: lọc còn hàng / hết hàng =====
+        if (!string.IsNullOrWhiteSpace(stockStatus))
+        {
+            if (stockStatus == "in")
+            {
+                products = products.Where(p => p.Stock > 0);
+            }
+            else if (stockStatus == "out")
+            {
+                products = products.Where(p => p.Stock <= 0);
+            }
+        }
+
+        // ===== ĐÃ SỬA: sắp xếp theo giá =====
+        products = sortPrice switch
+        {
+            "price_asc" => products.OrderBy(p => p.Price).ThenByDescending(p => p.Id),
+            "price_desc" => products.OrderByDescending(p => p.Price).ThenByDescending(p => p.Id),
+            _ => products.OrderByDescending(p => p.Id)
+        };
 
         var totalProducts = await products.CountAsync();
         var totalPages = (int)Math.Ceiling((double)totalProducts / pageSize);
 
+        if (totalPages == 0)
+        {
+            totalPages = 1;
+        }
+
+        if (page > totalPages)
+        {
+            page = totalPages;
+        }
+
         var productList = await products
-            .OrderByDescending(p => p.Id)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .ToListAsync();
@@ -46,8 +108,14 @@ public class ProductController : Controller
         ViewBag.CategoryId = new SelectList(_context.Categories, "Id", "Name", categoryId);
         ViewBag.CurrentPage = page;
         ViewBag.TotalPages = totalPages;
-        ViewBag.SearchString = searchString;
+
+        // ===== ĐÃ SỬA: trả lại giá trị filter cho View =====
+        ViewBag.SearchName = searchName;
         ViewBag.SelectedCategoryId = categoryId;
+        ViewBag.MinPrice = minPrice;
+        ViewBag.MaxPrice = maxPrice;
+        ViewBag.SortPrice = sortPrice;
+        ViewBag.StockStatus = stockStatus;
 
         return View(productList);
     }

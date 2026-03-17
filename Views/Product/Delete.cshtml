@@ -1,57 +1,136 @@
 @model QLBH.Models.Product
+@using QLBH.Utils
 
 @{
-    ViewData["Title"] = "Delete";
+    ViewData["Title"] = "Xóa sản phẩm";
+    var firstImage = ImageHelper.GetFirstImageOrDefault(Model.Images);
 }
 
-<h1>Delete</h1>
+<div class="container py-4">
+    @* ===== ĐÃ SỬA: Header trang ===== *@
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+        <div>
+            <h1 class="fw-bold text-danger mb-1">Xóa sản phẩm</h1>
+            <p class="text-muted mb-0">Kiểm tra lại thông tin sản phẩm trước khi xác nhận xóa.</p>
+        </div>
+        <a asp-action="Index" class="btn btn-outline-secondary rounded-3">
+            ← Quay lại danh sách
+        </a>
+    </div>
 
-<h3>Are you sure you want to delete this?</h3>
-<div>
-    <h4>Product</h4>
-    <hr />
-    <dl class="row">
-        <dt class="col-sm-2">
-            @Html.DisplayNameFor(model => model.Name)
-        </dt>
-        <dd class="col-sm-10">
-            @Html.DisplayFor(model => model.Name)
-        </dd>
-        <dt class="col-sm-2">
-            @Html.DisplayNameFor(model => model.Description)
-        </dt>
-        <dd class="col-sm-10">
-            @Html.DisplayFor(model => model.Description)
-        </dd>
-        <dt class="col-sm-2">
-            @Html.DisplayNameFor(model => model.Images)
-        </dt>
-        <dd class="col-sm-10">
-            @Html.DisplayFor(model => model.Images)
-        </dd>
-        <dt class="col-sm-2">
-            @Html.DisplayNameFor(model => model.Price)
-        </dt>
-        <dd class="col-sm-10">
-            @Html.DisplayFor(model => model.Price)
-        </dd>
-        <dt class="col-sm-2">
-            @Html.DisplayNameFor(model => model.Stock)
-        </dt>
-        <dd class="col-sm-10">
-            @Html.DisplayFor(model => model.Stock)
-        </dd>
-        <dt class="col-sm-2">
-            @Html.DisplayNameFor(model => model.Category)
-        </dt>
-        <dd class="col-sm-10">
-            @Html.DisplayFor(model => model.Category.Id)
-        </dd>
-    </dl>
+    @* ===== ĐÃ SỬA: Khối cảnh báo ===== *@
+    <div class="alert alert-danger border-0 shadow-sm rounded-4 mb-4" role="alert">
+        <div class="fw-semibold mb-1">Bạn có chắc muốn xóa sản phẩm này không?</div>
+        <div class="small">Thao tác này có thể ảnh hưởng đến dữ liệu hiển thị trong cửa hàng.</div>
+    </div>
 
-    <form asp-action="Delete">
-        <input type="hidden" asp-for="Id" />
-        <input type="submit" value="Delete" class="btn btn-danger" /> |
-        <a asp-action="Index">Back to List</a>
-    </form>
+    <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+        <div class="row g-0">
+            @* ===== ĐÃ SỬA: Cột ảnh sản phẩm ===== *@
+            <div class="col-md-4 bg-light d-flex align-items-center justify-content-center p-3">
+                <img src="@firstImage"
+                     alt="@Model.Name"
+                     class="img-fluid rounded-4 border"
+                     style="max-height: 320px; object-fit: cover;" />
+            </div>
+
+            @* ===== ĐÃ SỬA: Cột thông tin sản phẩm ===== *@
+            <div class="col-md-8">
+                <div class="card-body p-4 p-lg-5">
+                    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-start gap-3 mb-4">
+                        <div>
+                            <h2 class="fw-bold mb-1">@Model.Name</h2>
+                            <p class="text-muted mb-0">Thông tin chi tiết của sản phẩm sắp bị xóa.</p>
+                        </div>
+                        <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-3 py-2 rounded-pill">
+                            Xác nhận xóa
+                        </span>
+                    </div>
+
+                    @* ===== ĐÃ SỬA: Danh sách thông tin hiển thị đẹp hơn ===== *@
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="border rounded-4 p-3 h-100 bg-light-subtle">
+                                <div class="text-muted small mb-1">Tên sản phẩm</div>
+                                <div class="fw-semibold">@Model.Name</div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="border rounded-4 p-3 h-100 bg-light-subtle">
+                                <div class="text-muted small mb-1">Giá bán</div>
+                                <div class="fw-bold text-danger fs-5">
+                                    @Model.Price.ToString("N0") đ
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="border rounded-4 p-3 h-100 bg-light-subtle">
+                                <div class="text-muted small mb-1">Tồn kho</div>
+                                <div class="fw-semibold">@Model.Stock</div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="border rounded-4 p-3 h-100 bg-light-subtle">
+                                <div class="text-muted small mb-1">Danh mục</div>
+                                <div class="fw-semibold">
+                                    @if (Model.Category != null)
+                                    {
+                                        @if (!string.IsNullOrWhiteSpace(Model.Category.Name))
+                                        {
+                                            @Model.Category.Name
+                                        }
+                                        else
+                                        {
+                                            <span>ID: @Model.Category.Id</span>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <span>Chưa có danh mục</span>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-12">
+                            <div class="border rounded-4 p-3 bg-light-subtle">
+                                <div class="text-muted small mb-1">Mô tả</div>
+                                <div>
+                                    @(string.IsNullOrWhiteSpace(Model.Description) ? "Chưa có mô tả cho sản phẩm này." : Model.Description)
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-12">
+                            <div class="border rounded-4 p-3 bg-light-subtle">
+                                <div class="text-muted small mb-1">Chuỗi ảnh</div>
+                                <div class="text-break small">
+                                    @(string.IsNullOrWhiteSpace(Model.Images) ? "Không có dữ liệu ảnh." : Model.Images)
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    @* ===== ĐÃ SỬA: Nút thao tác ===== *@
+                    <form asp-action="Delete" method="post" class="mt-4">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" asp-for="Id" />
+
+                        <div class="d-flex flex-column flex-sm-row gap-2">
+                            <button type="submit" class="btn btn-danger px-4 rounded-3">
+                                Xóa sản phẩm
+                            </button>
+
+                            <a asp-action="Index" class="btn btn-outline-secondary px-4 rounded-3">
+                                Hủy
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
