@@ -1,0 +1,130 @@
+@startuml Use Case Diagram - Hệ thống Quản lý Bán hàng Đồ Gỗ
+!define AWSPUML https://raw.githubusercontent.com/awslabs/aws-icons-for-plantuml/v14.0/dist
+!include AWSPUML/AWSCommon.puml
+
+left to right direction
+skinparam actorBackgroundColor #ADD1B2
+skinparam usecaseBackgroundColor #F0F0F0
+skinparam packageBackgroundColor #FAFAFA
+
+actor Khách_Chưa_Đăng_Nhập as Guest <<Khách>>
+actor Khách_Đã_Đăng_Nhập as Customer <<Người dùng>>
+actor Quản_Trị_Viên as Admin <<Admin>>
+
+rectangle "🏪 Hệ thống Quản lý Bán hàng Đồ Gỗ Quảng Thủy" {
+  
+  package "📦 Quản lý Sản phẩm" {
+    usecase "Duyệt danh sách sản phẩm" as UC_Browse
+    usecase "Tìm kiếm sản phẩm" as UC_Search
+    usecase "Xem chi tiết sản phẩm" as UC_ProductDetail
+    usecase "Lọc theo giá/danh mục" as UC_Filter
+  }
+
+  package "🔐 Quản lý Tài khoản" {
+    usecase "Đăng ký tài khoản" as UC_Register
+    usecase "Đăng nhập" as UC_Login
+    usecase "Đăng xuất" as UC_Logout
+    usecase "Quên mật khẩu" as UC_ForgotPassword
+    usecase "Đặt lại mật khẩu" as UC_ResetPassword
+  }
+
+  package "🛒 Quản lý Giỏ hàng" {
+    usecase "Xem giỏ hàng" as UC_ViewCart
+    usecase "Thêm sản phẩm vào giỏ" as UC_AddCart
+    usecase "Cập nhật số lượng" as UC_UpdateQty
+    usecase "Xóa sản phẩm khỏi giỏ" as UC_RemoveCart
+    usecase "Xóa toàn bộ giỏ" as UC_ClearCart
+  }
+
+  package "💳 Quản lý Đơn hàng" {
+    usecase "Thanh toán / Đặt hàng" as UC_Checkout
+    usecase "Xem lịch sử đơn hàng" as UC_OrderHistory
+    usecase "Xem chi tiết đơn hàng" as UC_OrderDetail
+    usecase "Theo dõi đơn hàng (không cần login)" as UC_TrackOrder
+  }
+
+  package "👨‍💼 Admin - Quản lý Sản phẩm" {
+    usecase "Thêm sản phẩm mới" as UC_CreateProduct
+    usecase "Chỉnh sửa sản phẩm" as UC_EditProduct
+    usecase "Xóa sản phẩm" as UC_DeleteProduct
+    usecase "Nạp dữ liệu mẫu" as UC_LoadSampleData
+  }
+
+  package "📋 Admin - Quản lý Đơn hàng" {
+    usecase "Xem danh sách tất cả đơn" as UC_AdminOrderList
+    usecase "Cập nhật trạng thái đơn" as UC_UpdateOrderStatus
+    usecase "Cập nhật trạng thái thanh toán" as UC_UpdatePaymentStatus
+  }
+
+  package "📊 Admin - Tồn kho" {
+    usecase "Xem dashboard tồn kho" as UC_InventoryDashboard
+    usecase "Điều chỉnh tồn kho (nhập/xuất)" as UC_AdjustStock
+    usecase "Xem lịch sử thay đổi tồn kho" as UC_StockHistory
+  }
+
+  package "📈 Admin - Thống kê & Báo cáo" {
+    usecase "Xem thống kê doanh số" as UC_Statistics
+    usecase "Lọc theo khoảng thời gian" as UC_FilterStatistics
+    usecase "Xem sản phẩm bán chạy nhất" as UC_TopProducts
+    usecase "Xem doanh thu theo ngày" as UC_DailyRevenue
+    usecase "Xem sản phẩm hết hàng/sắp hết" as UC_LowStock
+  }
+}
+
+' Khách chưa đăng nhập
+Guest --> UC_Browse
+Guest --> UC_Search
+Guest --> UC_ProductDetail
+Guest --> UC_Filter
+Guest --> UC_Register
+Guest --> UC_Login
+Guest --> UC_TrackOrder
+Guest --> UC_ForgotPassword
+
+' Khách đã đăng nhập
+Customer --> UC_Browse
+Customer --> UC_Search
+Customer --> UC_ProductDetail
+Customer --> UC_Filter
+Customer --> UC_Login
+Customer --> UC_Logout
+Customer --> UC_ViewCart
+Customer --> UC_AddCart
+Customer --> UC_UpdateQty
+Customer --> UC_RemoveCart
+Customer --> UC_ClearCart
+Customer --> UC_Checkout
+Customer --> UC_OrderHistory
+Customer --> UC_OrderDetail
+Customer --> UC_TrackOrder
+Customer --> UC_ForgotPassword
+Customer --> UC_ResetPassword
+
+' Admin
+Admin --> UC_Browse
+Admin --> UC_ProductDetail
+Admin --> UC_Login
+Admin --> UC_Logout
+Admin --> UC_CreateProduct
+Admin --> UC_EditProduct
+Admin --> UC_DeleteProduct
+Admin --> UC_LoadSampleData
+Admin --> UC_AdminOrderList
+Admin --> UC_UpdateOrderStatus
+Admin --> UC_UpdatePaymentStatus
+Admin --> UC_InventoryDashboard
+Admin --> UC_AdjustStock
+Admin --> UC_StockHistory
+Admin --> UC_Statistics
+Admin --> UC_FilterStatistics
+Admin --> UC_TopProducts
+Admin --> UC_DailyRevenue
+Admin --> UC_LowStock
+
+' Mối quan hệ
+UC_AddCart -.-> UC_Checkout : "chuỗi"
+UC_UpdateQty -.-> UC_Checkout : "chuỗi"
+UC_RemoveCart -.-> UC_Checkout : "chuỗi"
+UC_Checkout -.-> UC_OrderDetail : "tạo"
+
+@enduml

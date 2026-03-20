@@ -1,0 +1,82 @@
+@startuml Sequence Diagram - Quy trình Thanh toán / Đặt hàng
+!define SEQUENCE_SPACING 100
+
+participant "👤 Khách hàng" as Customer
+participant "🌐 Trình duyệt" as Browser
+participant "📱 API/Controller" as Controller
+participant "🔧 Service Layer" as Service
+participant "💾 Database" as Database
+
+Customer -> Browser: Bấm nút 'Thanh toán'
+activate Browser
+
+Browser -> Controller: POST /Order/Checkout\n(CheckoutViewModel)
+activate Controller
+
+Controller -> Controller: 🔐 Kiểm tra quyền (IsAuthorized)
+alt Người dùng chưa đăng nhập/hết phiên
+    Controller -->> Browser: Redirect đăng nhập
+    deactivate Controller
+else OK - Đã đăng nhập
+    
+    Controller -> Database: SELECT CartItems\nWHERE UserId = ?
+    activate Database
+    Database -->> Controller: Danh sách CartItems + Products
+    deactivate Database
+    
+    Controller -> Service: ValidateCheckout(cartItems, model)
+    activate Service
+    Service -> Service: ✅ Kiểm tra:\n- Giỏ không trống\n- Stock sản phẩm\n- Phương thức thanh toán\n- Dữ liệu hợp lệ
+    alt Có lỗi validation
+        Service -->> Controller: ValidationResult(failed)
+        Controller -->> Browser: Render form lại + lỗi
+        deactivate Service
+        deactivate Controller
+    else OK - Pass validation
+        Service -->> Controller: ValidationResult(success)
+        deactivate Service
+        
+        Controller -> Database: BEGIN TRANSACTION
+        activate Database
+        
+        Controller -> Database: INSERT INTO Orders\n(UserId, TotalAmount, OrderCode, Status...)
+        Database -->> Controller: Order.Id
+        
+        loop Mỗi CartItem
+            Controller -> Database: SELECT Product\nWHERE Id = ?
+            Database -->> Controller: Product
+            
+            Controller -> Database: INSERT INTO OrderItems\n(OrderId, ProductId, Qty, Price...)
+            
+            Controller -> Database: UPDATE Product\nSET Stock = Stock - Qty\nWHERE Id = ?
+            
+            Controller -> Database: INSERT INTO InventoryTransactions\n(ProductId, QtyChanged, Type='CHECKOUT', Note...)
+        end
+        
+        Controller -> Database: DELETE FROM CartItems\nWHERE UserId = ?
+        
+        Controller -> Database: COMMIT TRANSACTION
+        deactivate Database
+        
+        Controller -->> Browser: Redirect /Order/Details/[OrderId]\n+ Success message
+        
+        Browser -->> Customer: ✅ Hiển thị trang xác nhận đơn hàng
+        deactivate Browser
+        deactivate Controller
+        
+        note over Customer
+            Đơn hàng đã được tạo thành công!
+            - Mã đơn: DH20260317...
+            - Trạng thái: Chờ xác nhận
+            - Thanh toán: Chưa thanh toán (COD)
+        end note
+    end
+end
+
+alt Exception hoặc lỗi DB
+    Controller -> Database: ROLLBACK TRANSACTION
+    Controller -->> Browser: Render form + ErrorMessage
+    Browser -->> Customer: ❌ Lỗi: Không thể tạo đơn
+end
+
+@enduml
