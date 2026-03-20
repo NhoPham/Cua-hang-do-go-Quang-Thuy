@@ -7,7 +7,6 @@ WHERE [email] = 'email-cua-ban@gmail.com';
 
 ## Ghi chú bảo mật
 - Mật khẩu mới sẽ được lưu theo định dạng hash PBKDF2.
-- Nếu database cũ đang có tài khoản lưu plaintext, hệ thống vẫn cho đăng nhập và sẽ tự đổi sang hash sau lần đăng nhập đầu tiên.
 
 ## dùng EF Core Migration
 ```bash
