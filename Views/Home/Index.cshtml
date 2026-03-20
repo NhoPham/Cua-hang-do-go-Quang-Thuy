@@ -1,307 +1,600 @@
 ﻿@{
     ViewData["Title"] = "Trang chủ";
+    var isAdmin = User.IsInRole("admin");
 }
 
-<div class="home-wrapper py-5">
-    <div class="container">
-        <div class="hero-box mb-5">
-            <div class="row align-items-center g-4">
-                <div class="col-lg-8">
-                    <span class="hero-badge">Cửa hàng đồ gỗ Quảng Thủy</span>
-                    <h1 class="hero-title mt-3">
-                        Nội thất gỗ đẹp, bền và phù hợp cho nhiều không gian sống
-                    </h1>
-                    <p class="hero-subtitle mt-3">
-                        Chúng tôi cung cấp các sản phẩm đồ gỗ như bàn, ghế, tủ, giường, kệ
-                        với thiết kế hiện đại, dễ lựa chọn và phù hợp cho gia đình, văn phòng
-                        và nhiều nhu cầu sử dụng khác nhau.
-                    </p>
-
-                    <form asp-controller="Product" asp-action="Index" method="get" class="search-box mt-4">
-                        <div class="input-group input-group-lg">
-                            <input type="text"
-                                   name="searchString"
-                                   class="form-control search-input"
-                                   placeholder="Tìm kiếm sản phẩm đồ gỗ..." />
-                            <button class="btn btn-primary px-4" type="submit">Tìm kiếm</button>
-                        </div>
-                    </form>
-
-                    <div class="hero-actions mt-4">
-                        <a asp-controller="Product" asp-action="Index" class="btn btn-primary btn-lg me-2">
-                            Xem sản phẩm
-                        </a>
-                        <a asp-controller="Home" asp-action="Privacy" class="btn btn-outline-dark btn-lg">
-                            Giới thiệu chúng tôi
-                        </a>
-                    </div>
-                </div>
-
-                <div class="col-lg-4">
-                    <div class="info-card">
-                        <h4 class="mb-3">Thông tin nhanh</h4>
-                        <div class="info-item">
-                            <span class="info-label">Sản phẩm</span>
-                            <span class="info-value">Đồ gỗ nội thất</span>
-                        </div>
-                        <div class="info-item">
-                            <span class="info-label">Phù hợp</span>
-                            <span class="info-value">Gia đình, văn phòng</span>
-                        </div>
-                        <div class="info-item">
-                            <span class="info-label">Hỗ trợ</span>
-                            <span class="info-value">Tư vấn tận tình</span>
-                        </div>
-                        <div class="info-item">
-                            <span class="info-label">Chất lượng</span>
-                            <span class="info-value">Bền đẹp, dễ lựa chọn</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="section-box mb-4">
-            <div class="section-header mb-4">
-                <h2>Về cửa hàng Quảng Thủy</h2>
-                <p>
-                    Chúng tôi hướng đến việc mang lại những sản phẩm đồ gỗ có tính thẩm mỹ,
-                    độ bền cao và đáp ứng tốt nhu cầu sử dụng thực tế của khách hàng.
-                </p>
-            </div>
-
-            <div class="row g-4">
-                <div class="col-md-4">
-                    <div class="feature-card h-100">
-                        <div class="feature-icon">🪵</div>
-                        <h4>Sản phẩm đa dạng</h4>
-                        <p>
-                            Cung cấp nhiều dòng sản phẩm như bàn, ghế, tủ, giường, kệ
-                            và các sản phẩm nội thất bằng gỗ.
-                        </p>
-                    </div>
-                </div>
-
-                <div class="col-md-4">
-                    <div class="feature-card h-100">
-                        <div class="feature-icon">✨</div>
-                        <h4>Thiết kế đẹp mắt</h4>
-                        <p>
-                            Mẫu mã được lựa chọn theo hướng hiện đại, dễ kết hợp với nhiều
-                            không gian sống và làm việc.
-                        </p>
-                    </div>
-                </div>
-
-                <div class="col-md-4">
-                    <div class="feature-card h-100">
-                        <div class="feature-icon">🤝</div>
-                        <h4>Phục vụ tận tình</h4>
-                        <p>
-                            Luôn hỗ trợ khách hàng trong quá trình tham khảo, lựa chọn
-                            và tìm kiếm sản phẩm phù hợp.
-                        </p>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="section-box">
-            <div class="row g-4 align-items-center">
-                <div class="col-lg-7">
-                    <h2 class="mb-3">Cam kết của chúng tôi</h2>
-                    <p class="mb-3">
-                        Cửa hàng đồ gỗ Quảng Thủy mong muốn trở thành địa chỉ tin cậy để khách hàng
-                        có thể dễ dàng tìm hiểu và lựa chọn các sản phẩm nội thất gỗ phù hợp.
-                    </p>
-                    <p class="mb-0">
-                        Chúng tôi luôn ưu tiên chất lượng sản phẩm, sự rõ ràng trong thông tin
-                        và trải nghiệm tốt hơn cho khách hàng khi tham khảo trên website.
-                    </p>
-                </div>
-
-                <div class="col-lg-5">
-                    <div class="commit-box">
-                        <div class="commit-item">✔ Giao diện dễ sử dụng</div>
-                        <div class="commit-item">✔ Dễ tìm kiếm sản phẩm</div>
-                        <div class="commit-item">✔ Thông tin rõ ràng</div>
-                        <div class="commit-item">✔ Phù hợp làm website cửa hàng</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
 <style>
-    .home-wrapper {
-        background: linear-gradient(180deg, #f8f6f3 0%, #ffffff 100%);
-        min-height: 100vh;
+    .home-page {
+        --wood-dark: #241a14;
+        --wood-dark-2: #3a2b20;
+        --wood-brown: #6f533d;
+        --wood-gold: #c7a27a;
+        --wood-gold-2: #b88f64;
+        --wood-cream: #f7f1ea;
+        --wood-soft: #efe4d6;
+        --wood-border: #e4d7c8;
+        --wood-text: #4d3b2d;
+        --wood-muted: #8d7a69;
     }
 
-    .hero-box,
-    .section-box {
-        background: #ffffff;
-        border: 1px solid #ece7e1;
-        border-radius: 28px;
-        padding: 32px;
-        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.05);
+    .hero-home {
+        background:
+            linear-gradient(135deg, rgba(36,26,20,.96), rgba(61,45,33,.90)),
+            radial-gradient(circle at top right, rgba(199,162,122,.20), transparent 40%);
+        color: #fff;
+        border-radius: 32px;
+        overflow: hidden;
+        position: relative;
     }
 
-    .hero-badge {
-        display: inline-block;
-        background: #f2e7da;
-        color: #7a4e2d;
-        padding: 8px 16px;
+    .hero-home::before {
+        content: "";
+        position: absolute;
+        right: -80px;
+        top: -60px;
+        width: 260px;
+        height: 260px;
+        border-radius: 50%;
+        background: rgba(255,255,255,.05);
+    }
+
+    .hero-home::after {
+        content: "";
+        position: absolute;
+        right: 70px;
+        bottom: -70px;
+        width: 180px;
+        height: 180px;
+        border-radius: 50%;
+        background: rgba(199,162,122,.12);
+    }
+
+    .hero-kicker {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 14px;
         border-radius: 999px;
-        font-weight: 600;
-        font-size: 0.95rem;
+        background: rgba(255,255,255,.08);
+        color: #f5e7d3;
+        font-size: .92rem;
     }
 
     .hero-title {
-        font-size: 3rem;
+        font-size: clamp(2rem, 4vw, 3.5rem);
         font-weight: 800;
-        color: #2f241f;
-        line-height: 1.2;
+        line-height: 1.15;
     }
 
     .hero-subtitle {
-        font-size: 1.08rem;
-        color: #5f5651;
-        line-height: 1.8;
-        max-width: 760px;
+        color: rgba(255,255,255,.78);
+        font-size: 1.02rem;
+        max-width: 720px;
     }
 
-    .search-input {
-        border-radius: 16px 0 0 16px !important;
-        border: 1px solid #ddd6cf;
-        min-height: 58px;
-        box-shadow: none;
+    .hero-actions .btn {
+        min-width: 180px;
+        border-radius: 14px;
+        padding: 12px 22px;
+        font-weight: 600;
     }
 
-    .search-box .btn {
-        border-radius: 0 16px 16px 0 !important;
+    .btn-wood-gold {
+        background: var(--wood-gold);
+        color: var(--wood-dark);
+        border: 1px solid var(--wood-gold);
     }
 
-    .info-card {
-        background: linear-gradient(135deg, #5c4033, #8b5e3c);
+    .btn-wood-gold:hover {
+        background: var(--wood-gold-2);
+        border-color: var(--wood-gold-2);
+        color: var(--wood-dark);
+    }
+
+    .btn-wood-light {
+        background: rgba(255,255,255,.08);
         color: #fff;
-        border-radius: 24px;
-        padding: 24px;
-        height: 100%;
-        box-shadow: 0 12px 30px rgba(92, 64, 51, 0.2);
+        border: 1px solid rgba(255,255,255,.18);
     }
 
-    .info-card h4 {
+    .btn-wood-light:hover {
+        background: rgba(255,255,255,.14);
+        color: #fff;
+        border-color: rgba(255,255,255,.24);
+    }
+
+    .hero-panel {
+        position: relative;
+        z-index: 2;
+        background: rgba(255,255,255,.08);
+        border: 1px solid rgba(255,255,255,.10);
+        border-radius: 24px;
+        padding: 22px;
+        backdrop-filter: blur(8px);
+    }
+
+    .hero-stat-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 14px;
+    }
+
+    .hero-stat {
+        background: rgba(255,255,255,.08);
+        border-radius: 18px;
+        padding: 16px;
+        border: 1px solid rgba(255,255,255,.08);
+    }
+
+    .hero-stat-label {
+        color: rgba(255,255,255,.72);
+        font-size: .85rem;
+        margin-bottom: 4px;
+    }
+
+    .hero-stat-value {
+        font-size: 1.05rem;
         font-weight: 700;
     }
 
-    .info-item {
-        display: flex;
-        justify-content: space-between;
-        gap: 16px;
-        padding: 12px 0;
-        border-bottom: 1px solid rgba(255,255,255,0.18);
-    }
-
-    .info-item:last-child {
-        border-bottom: none;
-    }
-
-    .info-label {
-        opacity: 0.85;
-    }
-
-    .info-value {
-        font-weight: 600;
-        text-align: right;
-    }
-
-    .section-header h2,
-    .section-box h2 {
+    .section-title {
         font-size: 2rem;
         font-weight: 800;
-        color: #2f241f;
-    }
-
-    .section-header p,
-    .section-box p {
-        color: #5f5651;
-        line-height: 1.8;
-    }
-
-    .feature-card {
-        background: #faf8f5;
-        border: 1px solid #ece7e1;
-        border-radius: 22px;
-        padding: 24px;
-        transition: transform 0.2s ease, box-shadow 0.2s ease;
-    }
-
-    .feature-card:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 10px 25px rgba(0,0,0,0.05);
-    }
-
-    .feature-icon {
-        font-size: 2.2rem;
-        margin-bottom: 14px;
-    }
-
-    .feature-card h4 {
-        font-weight: 700;
-        color: #2f241f;
+        color: var(--wood-text);
         margin-bottom: 10px;
     }
 
-    .feature-card p {
-        color: #5f5651;
-        margin-bottom: 0;
+    .section-subtitle {
+        color: var(--wood-muted);
+        max-width: 720px;
+    }
+
+    .category-card {
+        border: 0;
+        border-radius: 26px;
+        overflow: hidden;
+        box-shadow: 0 12px 28px rgba(36,26,20,.08);
+        background: #fff;
+        height: 100%;
+        transition: transform .25s ease, box-shadow .25s ease;
+    }
+
+    .category-card:hover {
+        transform: translateY(-6px);
+        box-shadow: 0 18px 34px rgba(36,26,20,.12);
+    }
+
+    .category-visual {
+        height: 190px;
+        background:
+            linear-gradient(135deg, rgba(36,26,20,.84), rgba(111,83,61,.76)),
+            radial-gradient(circle at top left, rgba(199,162,122,.28), transparent 35%);
+        display: flex;
+        align-items: flex-end;
+        padding: 18px;
+        color: #fff;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .category-visual::after {
+        content: "";
+        position: absolute;
+        right: -24px;
+        top: -24px;
+        width: 110px;
+        height: 110px;
+        border-radius: 50%;
+        background: rgba(255,255,255,.08);
+    }
+
+    .category-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 54px;
+        height: 54px;
+        border-radius: 18px;
+        background: rgba(255,255,255,.14);
+        font-size: 1.4rem;
+        margin-bottom: 14px;
+    }
+
+    .category-title {
+        font-size: 1.2rem;
+        font-weight: 700;
+        margin-bottom: 6px;
+    }
+
+    .category-text {
+        color: var(--wood-muted);
         line-height: 1.7;
     }
 
-    .commit-box {
-        background: #faf8f5;
-        border: 1px solid #ece7e1;
+    .feature-card {
+        border: 1px solid var(--wood-border);
         border-radius: 22px;
-        padding: 22px;
+        background: #fff;
+        padding: 26px;
+        height: 100%;
+        box-shadow: 0 8px 22px rgba(36,26,20,.05);
     }
 
-    .commit-item {
-        padding: 12px 0;
-        border-bottom: 1px solid #e8dfd6;
-        color: #3b312c;
-        font-weight: 500;
+    .feature-icon {
+        width: 58px;
+        height: 58px;
+        border-radius: 18px;
+        background: linear-gradient(135deg, var(--wood-soft), #f8efe4);
+        color: var(--wood-brown);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.4rem;
+        margin-bottom: 16px;
     }
 
-    .commit-item:last-child {
-        border-bottom: none;
+    .feature-title {
+        font-weight: 700;
+        color: var(--wood-text);
+        margin-bottom: 10px;
     }
 
-    @@media (max-width: 992px) {
-        .hero-title {
-            font-size: 2.3rem;
-        }
+    .feature-text {
+        color: var(--wood-muted);
+        line-height: 1.75;
     }
 
-    @@media (max-width: 768px) {
-        .hero-box,
-        .section-box {
-            padding: 22px;
-            border-radius: 22px;
+    .showcase-card {
+        background: linear-gradient(135deg, #fff, #fbf6f0);
+        border: 1px solid var(--wood-border);
+        border-radius: 28px;
+        padding: 28px;
+        box-shadow: 0 12px 28px rgba(36,26,20,.05);
+    }
+
+    .showcase-list {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 14px;
+    }
+
+    .showcase-item {
+        border-radius: 18px;
+        background: #fff;
+        border: 1px solid var(--wood-border);
+        padding: 16px 18px;
+    }
+
+    .showcase-item-title {
+        font-weight: 700;
+        color: var(--wood-text);
+        margin-bottom: 4px;
+    }
+
+    .showcase-item-text {
+        color: var(--wood-muted);
+        font-size: .95rem;
+    }
+
+    .admin-quick-card {
+        background: linear-gradient(135deg, #2b2119, #4a3a2b);
+        color: #fff;
+        border-radius: 28px;
+        padding: 32px;
+        overflow: hidden;
+        position: relative;
+    }
+
+    .admin-quick-card::after {
+        content: "";
+        position: absolute;
+        inset: auto -50px -50px auto;
+        width: 180px;
+        height: 180px;
+        border-radius: 50%;
+        background: rgba(255,255,255,.06);
+    }
+
+    .admin-quick-card .btn {
+        border-radius: 14px;
+    }
+
+    .cta-final {
+        background: linear-gradient(135deg, #f5ede3, #fff);
+        border: 1px solid var(--wood-border);
+        border-radius: 30px;
+        padding: 34px;
+        box-shadow: 0 12px 24px rgba(36,26,20,.05);
+    }
+
+    @@media (max-width: 991.98px) {
+        .hero-home {
+            border-radius: 24px;
         }
 
-        .hero-title {
-            font-size: 2rem;
-        }
-
-        .hero-actions .btn {
-            width: 100%;
-            margin-bottom: 10px;
-        }
-
-        .hero-actions .btn:last-child {
-            margin-bottom: 0;
+        .category-visual {
+            height: 170px;
         }
     }
 </style>
+
+<div class="home-page">
+    @* ===== ĐÃ SỬA: hero section lớn cho trang chủ ===== *@
+    <section class="hero-home p-4 p-lg-5 mb-5">
+        <div class="row align-items-center g-4 position-relative">
+            <div class="col-lg-7">
+                <div class="hero-kicker mb-3">
+                    <span>•</span>
+                    <span>Nội thất gỗ cho không gian sống hiện đại</span>
+                </div>
+
+                <h1 class="hero-title mb-3">
+                    Tối giản trong thiết kế,
+                    ấm áp trong trải nghiệm sống
+                </h1>
+
+                <p class="hero-subtitle mb-4">
+                    Khám phá các dòng bàn, ghế, tủ, giường và kệ với phong cách sang trọng,
+                    tinh gọn và dễ ứng dụng cho nhiều không gian nhà ở, văn phòng hay căn hộ hiện đại.
+                </p>
+
+                <div class="hero-actions d-flex flex-wrap gap-3">
+                    <a asp-controller="Product" asp-action="Index" class="btn btn-wood-gold">
+                        Xem toàn bộ sản phẩm
+                    </a>
+
+                    <a asp-controller="Order" asp-action="Track" class="btn btn-wood-light">
+                        Theo dõi đơn hàng
+                    </a>
+                </div>
+            </div>
+
+            <div class="col-lg-5">
+                <div class="hero-panel">
+                    <h5 class="fw-bold mb-3">Điểm nhấn của cửa hàng</h5>
+
+                    <div class="hero-stat-grid">
+                        <div class="hero-stat">
+                            <div class="hero-stat-label">Phong cách</div>
+                            <div class="hero-stat-value">Sang • Tinh gọn • Ấm</div>
+                        </div>
+
+                        <div class="hero-stat">
+                            <div class="hero-stat-label">Danh mục</div>
+                            <div class="hero-stat-value">Bàn • Ghế • Tủ • Giường</div>
+                        </div>
+
+                        <div class="hero-stat">
+                            <div class="hero-stat-label">Trải nghiệm</div>
+                            <div class="hero-stat-value">Dễ tìm, dễ lọc, dễ mua</div>
+                        </div>
+
+                        <div class="hero-stat">
+                            <div class="hero-stat-label">Quản trị</div>
+                            <div class="hero-stat-value">Tối ưu cho admin</div>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 text-white-50">
+                        Giao diện được thiết kế đồng bộ với tông gỗ ấm, giúp cảm giác thương hiệu rõ ràng hơn.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    @* ===== ĐÃ SỬA: section danh mục nổi bật ===== *@
+    <section class="mb-5">
+        <div class="mb-4">
+            <h2 class="section-title">Danh mục nổi bật</h2>
+            <p class="section-subtitle mb-0">
+                Các nhóm sản phẩm chính được sắp xếp rõ ràng để khách hàng dễ định hướng và bắt đầu mua sắm nhanh hơn.
+            </p>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-lg-4 col-md-6">
+                <div class="category-card">
+                    <div class="category-visual">
+                        <div>
+                            <div class="category-badge">🪑</div>
+                            <div class="category-title">Bàn & Ghế</div>
+                            <div class="small text-white-50">Tinh gọn cho phòng ăn, phòng làm việc, phòng khách</div>
+                        </div>
+                    </div>
+                    <div class="p-4">
+                        <p class="category-text mb-4">
+                            Nhóm sản phẩm phù hợp cho nhiều phong cách sống hiện đại, từ gia đình đến không gian làm việc.
+                        </p>
+                        <a asp-controller="Product" asp-action="Index" class="btn btn-outline-dark rounded-3">
+                            Khám phá sản phẩm
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-4 col-md-6">
+                <div class="category-card">
+                    <div class="category-visual">
+                        <div>
+                            <div class="category-badge">🛏️</div>
+                            <div class="category-title">Giường & Tủ</div>
+                            <div class="small text-white-50">Đề cao công năng, độ bền và sự ấm cúng</div>
+                        </div>
+                    </div>
+                    <div class="p-4">
+                        <p class="category-text mb-4">
+                            Phù hợp cho phòng ngủ cần sự cân bằng giữa thẩm mỹ, không gian lưu trữ và cảm giác dễ chịu.
+                        </p>
+                        <a asp-controller="Product" asp-action="Index" class="btn btn-outline-dark rounded-3">
+                            Xem bộ sưu tập
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-4 col-md-6">
+                <div class="category-card">
+                    <div class="category-visual">
+                        <div>
+                            <div class="category-badge">🪵</div>
+                            <div class="category-title">Kệ & Nội thất phụ trợ</div>
+                            <div class="small text-white-50">Bổ sung hoàn thiện cho không gian sống</div>
+                        </div>
+                    </div>
+                    <div class="p-4">
+                        <p class="category-text mb-4">
+                            Các mẫu kệ, tủ nhỏ, chi tiết nội thất phụ trợ giúp không gian thêm gọn gàng và có điểm nhấn.
+                        </p>
+                        <a asp-controller="Product" asp-action="Index" class="btn btn-outline-dark rounded-3">
+                            Xem ngay
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    @* ===== ĐÃ SỬA: section lợi ích / điểm mạnh ===== *@
+    <section class="mb-5">
+        <div class="mb-4">
+            <h2 class="section-title">Vì sao nên chọn Đồ Gỗ Quảng Thủy</h2>
+            <p class="section-subtitle mb-0">
+                Không chỉ là nơi trưng bày sản phẩm, đây còn là hệ thống giúp khách hàng chọn lựa nhanh và admin quản lý hiệu quả hơn.
+            </p>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-lg-4">
+                <div class="feature-card">
+                    <div class="feature-icon">✨</div>
+                    <div class="feature-title">Giao diện sang và rõ ràng</div>
+                    <div class="feature-text">
+                        Trình bày hiện đại, khoảng trắng thoáng, màu sắc ấm áp giúp hình ảnh nội thất trở nên nổi bật hơn.
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-4">
+                <div class="feature-card">
+                    <div class="feature-icon">🔎</div>
+                    <div class="feature-title">Tìm kiếm và lọc thuận tiện</div>
+                    <div class="feature-text">
+                        Người dùng dễ tìm sản phẩm theo tên, danh mục, khoảng giá, tình trạng còn hàng và cách sắp xếp phù hợp.
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-4">
+                <div class="feature-card">
+                    <div class="feature-icon">📦</div>
+                    <div class="feature-title">Theo dõi đơn và quản trị tốt hơn</div>
+                    <div class="feature-text">
+                        Hỗ trợ giỏ hàng, đơn hàng, theo dõi trạng thái và giao diện admin tách biệt để quản lý dễ dàng hơn.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    @* ===== ĐÃ SỬA: section mô tả phong cách / trưng bày ===== *@
+    <section class="mb-5">
+        <div class="row g-4 align-items-stretch">
+            <div class="col-lg-6">
+                <div class="showcase-card h-100">
+                    <h2 class="section-title mb-3" style="font-size: 1.8rem;">Không gian sống được hoàn thiện từ chi tiết</h2>
+                    <p class="section-subtitle mb-4">
+                        Mỗi nhóm sản phẩm được định hướng theo cảm giác “gọn - ấm - sang”, phù hợp với nhu cầu ở thực tế và trải nghiệm sử dụng hằng ngày.
+                    </p>
+
+                    <div class="showcase-list">
+                        <div class="showcase-item">
+                            <div class="showcase-item-title">Phòng khách</div>
+                            <div class="showcase-item-text">Bàn trà, kệ tivi, ghế và chi tiết trang trí tạo điểm nhấn tinh tế.</div>
+                        </div>
+
+                        <div class="showcase-item">
+                            <div class="showcase-item-title">Phòng ngủ</div>
+                            <div class="showcase-item-text">Giường, tủ, tab đầu giường tập trung vào cảm giác ấm cúng và dễ chịu.</div>
+                        </div>
+
+                        <div class="showcase-item">
+                            <div class="showcase-item-title">Phòng ăn & làm việc</div>
+                            <div class="showcase-item-text">Bàn ghế gọn gàng, dễ phối cùng nhiều kiểu không gian hiện đại.</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-6">
+                <div class="showcase-card h-100 d-flex flex-column justify-content-center">
+                    <div class="mb-3">
+                        <span class="hero-kicker" style="background:#f2e7da;color:#7b5b3b;">Thiết kế & Trải nghiệm</span>
+                    </div>
+
+                    <h2 class="section-title mb-3" style="font-size: 1.8rem;">Tập trung vào trải nghiệm mua sắm dễ chịu</h2>
+
+                    <p class="section-subtitle mb-4">
+                        Trang sản phẩm đã được tối ưu theo hai hướng riêng:
+                        khách hàng xem dạng card trực quan, còn admin xem dạng danh sách để quản trị nhanh hơn.
+                    </p>
+
+                    <div class="d-flex flex-wrap gap-2">
+                        <span class="filter-chip">Card cho khách hàng</span>
+                        <span class="filter-chip">Danh sách cho admin</span>
+                        <span class="filter-chip">Bộ lọc nâng cao</span>
+                        <span class="filter-chip">Icon giỏ hàng responsive</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    @* ===== ĐÃ SỬA: block riêng cho admin ===== *@
+    @if (isAdmin)
+    {
+        <section class="mb-5">
+            <div class="admin-quick-card">
+                <div class="row align-items-center g-4 position-relative">
+                    <div class="col-lg-8">
+                        <h2 class="fw-bold mb-2">Khu vực quản trị nhanh</h2>
+                        <p class="mb-0 text-white-50">
+                            Truy cập nhanh đến các khu vực quản trị sản phẩm, khách hàng, đơn hàng, kho và thống kê.
+                        </p>
+                    </div>
+
+                    <div class="col-lg-4">
+                        <div class="d-grid gap-2">
+                            <a asp-controller="Product" asp-action="Index" class="btn btn-light text-dark fw-semibold">Quản lý sản phẩm</a>
+                            <a asp-controller="Admin" asp-action="Customers" class="btn btn-outline-light">Quản lý khách hàng</a>
+                            <a asp-controller="Order" asp-action="Admin" class="btn btn-outline-light">Quản lý đơn hàng</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    }
+
+    @* ===== ĐÃ SỬA: CTA cuối trang ===== *@
+    <section class="cta-final">
+        <div class="row align-items-center g-4">
+            <div class="col-lg-8">
+                <h2 class="section-title mb-2">Bắt đầu khám phá bộ sưu tập nội thất</h2>
+                <p class="section-subtitle mb-0">
+                    Xem toàn bộ sản phẩm, lọc theo nhu cầu của bạn và theo dõi đơn hàng ngay trên hệ thống.
+                </p>
+            </div>
+
+            <div class="col-lg-4">
+                <div class="d-grid d-md-flex gap-2 justify-content-lg-end">
+                    <a asp-controller="Product" asp-action="Index" class="btn btn-dark rounded-3 px-4">
+                        Đi đến sản phẩm
+                    </a>
+                    <a asp-controller="Order" asp-action="Track" class="btn btn-outline-secondary rounded-3 px-4">
+                        Tra cứu đơn
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>

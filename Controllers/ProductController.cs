@@ -27,7 +27,6 @@ public class ProductController : Controller
         string? stockStatus,
         int page = 1)
     {
-        // ===== ĐÃ SỬA: thêm các bộ lọc mới =====
         const int pageSize = 8;
 
         if (page < 1)
@@ -42,9 +41,11 @@ public class ProductController : Controller
             maxPrice = temp;
         }
 
-        var products = _context.Products.AsQueryable();
+        // ===== ĐÃ SỬA: Include Category để admin view dạng danh sách hiển thị tên danh mục =====
+        var products = _context.Products
+            .Include(p => p.Category)
+            .AsQueryable();
 
-        // ===== ĐÃ SỬA: tìm kiếm theo tên không phân biệt hoa thường =====
         if (!string.IsNullOrWhiteSpace(searchName))
         {
             var keyword = searchName.Trim().ToLower();
@@ -66,7 +67,6 @@ public class ProductController : Controller
             products = products.Where(p => p.Price <= maxPrice.Value);
         }
 
-        // ===== ĐÃ SỬA: lọc còn hàng / hết hàng =====
         if (!string.IsNullOrWhiteSpace(stockStatus))
         {
             if (stockStatus == "in")
@@ -79,7 +79,6 @@ public class ProductController : Controller
             }
         }
 
-        // ===== ĐÃ SỬA: sắp xếp theo giá =====
         products = sortPrice switch
         {
             "price_asc" => products.OrderBy(p => p.Price).ThenByDescending(p => p.Id),
@@ -108,8 +107,6 @@ public class ProductController : Controller
         ViewBag.CategoryId = new SelectList(_context.Categories, "Id", "Name", categoryId);
         ViewBag.CurrentPage = page;
         ViewBag.TotalPages = totalPages;
-
-        // ===== ĐÃ SỬA: trả lại giá trị filter cho View =====
         ViewBag.SearchName = searchName;
         ViewBag.SelectedCategoryId = categoryId;
         ViewBag.MinPrice = minPrice;

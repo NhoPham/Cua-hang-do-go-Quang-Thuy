@@ -5,7 +5,7 @@
 @{
     var cartCount = 0;
 
-    // ===== ĐÃ SỬA: tính tổng số lượng sản phẩm trong giỏ =====
+    // ===== ĐÃ GIỮ: tính tổng số lượng sản phẩm trong giỏ =====
     if (User.Identity?.IsAuthenticated == true)
     {
         var userId = User.GetUserId();
@@ -25,25 +25,233 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - Đồ Gỗ Quảng Thủy</title>
+
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
-</head>
-<body class="bg-light">
-    <header>
-        <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm">
-            <div class="container">
-                <a class="navbar-brand fw-semibold" asp-controller="Home" asp-action="Index">Đồ Gỗ Quảng Thủy</a>
 
-                @* ===== ĐÃ SỬA: cụm mobile bên phải gồm giỏ hàng + nút 3 gạch ===== *@
+    @* ===== ĐÃ SỬA: style layout mới ===== *@
+    <style>
+        :root {
+            --wood-dark: #241a14;
+            --wood-dark-2: #37281d;
+            --wood-brown: #6f533d;
+            --wood-gold: #c7a27a;
+            --wood-gold-2: #b88f64;
+            --wood-cream: #f7f1ea;
+            --wood-soft: #efe4d6;
+            --wood-border: #e4d7c8;
+            --wood-text: #4d3b2d;
+            --wood-muted: #8d7a69;
+        }
+
+        html, body {
+            background: #f8f5f1;
+        }
+
+        body {
+            color: var(--wood-text);
+        }
+
+        .topbar {
+            background: linear-gradient(90deg, var(--wood-dark), var(--wood-dark-2));
+            color: rgba(255,255,255,.82);
+            font-size: .9rem;
+        }
+
+        .topbar .container {
+            min-height: 42px;
+        }
+
+        .topbar-text {
+            white-space: nowrap;
+        }
+
+        .main-navbar {
+            background: rgba(36,26,20,.96);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 10px 24px rgba(36,26,20,.10);
+        }
+
+        .site-brand {
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            color: #fff !important;
+            text-decoration: none;
+        }
+
+        .site-brand:hover {
+            color: #fff !important;
+        }
+
+        .brand-mark {
+            width: 42px;
+            height: 42px;
+            border-radius: 14px;
+            background: linear-gradient(135deg, var(--wood-gold), #e0bf98);
+            color: var(--wood-dark);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            box-shadow: 0 8px 18px rgba(199,162,122,.28);
+        }
+
+        .brand-title {
+            font-weight: 700;
+            letter-spacing: .01em;
+            line-height: 1.1;
+        }
+
+        .brand-subtitle {
+            font-size: .78rem;
+            color: rgba(255,255,255,.65);
+            margin-top: 2px;
+        }
+
+        .navbar-nav .nav-link.site-nav-link {
+            color: rgba(255,255,255,.82) !important;
+            padding: 10px 14px !important;
+            border-radius: 12px;
+            transition: all .2s ease;
+            font-weight: 500;
+        }
+
+        .navbar-nav .nav-link.site-nav-link:hover,
+        .navbar-nav .nav-link.site-nav-link:focus {
+            color: #fff !important;
+            background: rgba(255,255,255,.08);
+        }
+
+        .site-navbar-text {
+            color: rgba(255,255,255,.84) !important;
+        }
+
+        .btn-wood-light {
+            border: 1px solid rgba(255,255,255,.28);
+            color: #fff;
+            background: transparent;
+        }
+
+        .btn-wood-light:hover {
+            background: rgba(255,255,255,.08);
+            color: #fff;
+            border-color: rgba(255,255,255,.4);
+        }
+
+        .btn-wood-gold {
+            background: var(--wood-gold);
+            color: var(--wood-dark);
+            border: 1px solid var(--wood-gold);
+            font-weight: 600;
+        }
+
+        .btn-wood-gold:hover {
+            background: var(--wood-gold-2);
+            border-color: var(--wood-gold-2);
+            color: var(--wood-dark);
+        }
+
+        .cart-icon-btn {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .site-main {
+            min-height: calc(100vh - 260px);
+        }
+
+        .site-alert {
+            border: 0;
+            border-radius: 18px;
+            box-shadow: 0 10px 24px rgba(36,26,20,.06);
+        }
+
+        .site-footer {
+            background: linear-gradient(180deg, #fff, #f5eee6);
+            border-top: 1px solid var(--wood-border);
+            margin-top: 48px;
+        }
+
+        .footer-title {
+            font-weight: 700;
+            color: var(--wood-dark);
+            margin-bottom: 14px;
+        }
+
+        .footer-text {
+            color: var(--wood-muted);
+            line-height: 1.75;
+        }
+
+        .footer-link {
+            color: var(--wood-text);
+            text-decoration: none;
+            transition: color .2s ease;
+        }
+
+        .footer-link:hover {
+            color: var(--wood-brown);
+        }
+
+        .footer-bottom {
+            border-top: 1px solid var(--wood-border);
+            color: var(--wood-muted);
+        }
+
+        .navbar-toggler {
+            border-color: rgba(255,255,255,.18);
+        }
+
+        .navbar-toggler:focus {
+            box-shadow: 0 0 0 .2rem rgba(199,162,122,.18);
+        }
+
+        @@media (max-width: 991.98px) {
+            .brand-subtitle {
+                display: none;
+            }
+
+            .mobile-auth-group .btn {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    @* ===== ĐÃ SỬA: topbar nhỏ phía trên ===== *@
+    <div class="topbar">
+        <div class="container d-flex justify-content-between align-items-center gap-3">
+            <div class="topbar-text">Nội thất gỗ tinh gọn • Thẩm mỹ • Bền vững</div>
+            <div class="d-none d-md-block topbar-text">Đồ Gỗ Quảng Thủy</div>
+        </div>
+    </div>
+
+    <header>
+        @* ===== ĐÃ SỬA: navbar mới ===== *@
+        <nav class="navbar navbar-expand-lg main-navbar navbar-dark">
+            <div class="container">
+                <a class="site-brand" asp-controller="Home" asp-action="Index">
+                    <span class="brand-mark">QT</span>
+                    <span>
+                        <span class="d-block brand-title">Đồ Gỗ Quảng Thủy</span>
+                        <span class="brand-subtitle">Nội thất gỗ cho không gian sống hiện đại</span>
+                    </span>
+                </a>
+
+                @* ===== ĐÃ GIỮ: mobile có icon giỏ hàng cạnh nút 3 gạch ===== *@
                 <div class="d-flex align-items-center gap-2 ms-auto d-lg-none">
                     @if (User.Identity?.IsAuthenticated == true)
                     {
                         <a asp-controller="Cart"
                            asp-action="Index"
-                           class="btn btn-outline-light position-relative rounded-circle d-inline-flex align-items-center justify-content-center"
-                           style="width: 42px; height: 42px;"
+                           class="btn btn-wood-light cart-icon-btn"
                            title="Giỏ hàng">
-
                             <svg xmlns="http://www.w3.org/2000/svg"
                                  width="20"
                                  height="20"
@@ -75,62 +283,67 @@
                 </div>
 
                 <div class="collapse navbar-collapse" id="mainNavbar">
-                    <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                    <ul class="navbar-nav me-auto mb-2 mb-lg-0 ms-lg-4">
                         <li class="nav-item">
-                            <a class="nav-link" asp-controller="Home" asp-action="Index">Trang chủ</a>
+                            <a class="nav-link site-nav-link" asp-controller="Home" asp-action="Index">Trang chủ</a>
                         </li>
 
                         <li class="nav-item">
-                            <a class="nav-link" asp-controller="Product" asp-action="Index">Sản phẩm</a>
+                            <a class="nav-link site-nav-link" asp-controller="Product" asp-action="Index">Sản phẩm</a>
                         </li>
 
                         <li class="nav-item">
-                            <a class="nav-link" asp-controller="Order" asp-action="Track">Theo dõi đơn</a>
+                            <a class="nav-link site-nav-link" asp-controller="Order" asp-action="Track">Theo dõi đơn</a>
                         </li>
 
                         @if (User.Identity?.IsAuthenticated == true)
                         {
                             <li class="nav-item">
-                                <a class="nav-link" asp-controller="Order" asp-action="Index">Đơn của tôi</a>
+                                <a class="nav-link site-nav-link" asp-controller="Order" asp-action="Index">Đơn của tôi</a>
                             </li>
 
-                            @* ===== ĐÃ SỬA: thêm link giỏ hàng dạng chữ trong menu mobile/collapse nếu muốn bấm từ menu ===== *@
+                            @* ===== ĐÃ GIỮ: link giỏ hàng trong menu mobile ===== *@
                             <li class="nav-item d-lg-none">
-                                <a class="nav-link" asp-controller="Cart" asp-action="Index">Giỏ hàng (@cartCount)</a>
+                                <a class="nav-link site-nav-link" asp-controller="Cart" asp-action="Index">
+                                    Giỏ hàng (@cartCount)
+                                </a>
                             </li>
                         }
 
                         @if (User.IsInRole("admin"))
                         {
                             <li class="nav-item">
-                                <a class="nav-link" asp-controller="Order" asp-action="Admin">Quản lý đơn</a>
+                                <a class="nav-link site-nav-link" asp-controller="Order" asp-action="Admin">Quản lý đơn</a>
                             </li>
 
                             <li class="nav-item">
-                                <a class="nav-link" asp-controller="Inventory" asp-action="Index">Kho</a>
+                                <a class="nav-link site-nav-link" asp-controller="Inventory" asp-action="Index">Kho</a>
                             </li>
 
                             <li class="nav-item">
-                                <a class="nav-link" asp-controller="Statistics" asp-action="Index">Thống kê</a>
+                                <a class="nav-link site-nav-link" asp-controller="Statistics" asp-action="Index">Thống kê</a>
                             </li>
 
                             <li class="nav-item">
-                                <a class="nav-link" asp-controller="Product" asp-action="Create">Thêm sản phẩm</a>
+                                <a class="nav-link site-nav-link" asp-controller="Product" asp-action="Create">Thêm sản phẩm</a>
+                            </li>
+
+                            @* ===== ĐÃ GIỮ: menu khách hàng cho admin ===== *@
+                            <li class="nav-item">
+                                <a class="nav-link site-nav-link" asp-controller="Admin" asp-action="Customers">Khách hàng</a>
                             </li>
                         }
                     </ul>
 
-                    @* ===== ĐÃ SỬA: cụm desktop bên phải, ẩn ở mobile ===== *@
+                    @* ===== ĐÃ SỬA: cụm desktop bên phải ===== *@
                     <ul class="navbar-nav ms-auto align-items-lg-center gap-lg-2 d-none d-lg-flex">
                         @if (User.Identity?.IsAuthenticated == true)
                         {
-                            <li class="nav-item me-lg-2">
+                            <li class="nav-item me-lg-1">
                                 <a asp-controller="Cart"
                                    asp-action="Index"
-                                   class="btn btn-outline-light position-relative rounded-circle d-inline-flex align-items-center justify-content-center"
-                                   style="width: 42px; height: 42px;"
+                                   class="btn btn-wood-light cart-icon-btn"
                                    title="Giỏ hàng">
-
                                     <svg xmlns="http://www.w3.org/2000/svg"
                                          width="20"
                                          height="20"
@@ -151,7 +364,7 @@
                             </li>
 
                             <li class="nav-item me-lg-2">
-                                <span class="navbar-text">
+                                <span class="navbar-text site-navbar-text">
                                     Xin chào, <strong>@User.Identity.Name</strong>
                                 </span>
                             </li>
@@ -159,28 +372,28 @@
                             <li class="nav-item">
                                 <form asp-controller="Account" asp-action="Logout" method="post" class="d-inline">
                                     @Html.AntiForgeryToken()
-                                    <button type="submit" class="btn btn-outline-light btn-sm">Đăng xuất</button>
+                                    <button type="submit" class="btn btn-wood-light btn-sm rounded-3">Đăng xuất</button>
                                 </form>
                             </li>
                         }
                         else
                         {
                             <li class="nav-item me-2">
-                                <a class="btn btn-outline-light btn-sm" asp-controller="Account" asp-action="Login">Đăng nhập</a>
+                                <a class="btn btn-wood-light btn-sm rounded-3" asp-controller="Account" asp-action="Login">Đăng nhập</a>
                             </li>
 
                             <li class="nav-item">
-                                <a class="btn btn-warning btn-sm" asp-controller="Account" asp-action="Register">Đăng ký</a>
+                                <a class="btn btn-wood-gold btn-sm rounded-3" asp-controller="Account" asp-action="Register">Đăng ký</a>
                             </li>
                         }
                     </ul>
 
-                    @* ===== ĐÃ SỬA: cụm tài khoản mobile nằm trong menu xổ xuống ===== *@
-                    <ul class="navbar-nav mt-3 d-lg-none">
+                    @* ===== ĐÃ SỬA: cụm auth mobile trong menu xổ xuống ===== *@
+                    <ul class="navbar-nav mt-3 d-lg-none mobile-auth-group">
                         @if (User.Identity?.IsAuthenticated == true)
                         {
                             <li class="nav-item">
-                                <span class="navbar-text d-block mb-2">
+                                <span class="navbar-text site-navbar-text d-block mb-2">
                                     Xin chào, <strong>@User.Identity.Name</strong>
                                 </span>
                             </li>
@@ -188,18 +401,18 @@
                             <li class="nav-item">
                                 <form asp-controller="Account" asp-action="Logout" method="post" class="d-inline">
                                     @Html.AntiForgeryToken()
-                                    <button type="submit" class="btn btn-outline-light btn-sm">Đăng xuất</button>
+                                    <button type="submit" class="btn btn-wood-light btn-sm rounded-3">Đăng xuất</button>
                                 </form>
                             </li>
                         }
                         else
                         {
                             <li class="nav-item mb-2">
-                                <a class="btn btn-outline-light btn-sm w-100" asp-controller="Account" asp-action="Login">Đăng nhập</a>
+                                <a class="btn btn-wood-light btn-sm rounded-3" asp-controller="Account" asp-action="Login">Đăng nhập</a>
                             </li>
 
                             <li class="nav-item">
-                                <a class="btn btn-warning btn-sm w-100" asp-controller="Account" asp-action="Register">Đăng ký</a>
+                                <a class="btn btn-wood-gold btn-sm rounded-3" asp-controller="Account" asp-action="Register">Đăng ký</a>
                             </li>
                         }
                     </ul>
@@ -208,10 +421,10 @@
         </nav>
     </header>
 
-    <main class="container py-4">
+    <main class="site-main container py-4 py-lg-5">
         @if (TempData["SuccessMessage"] != null)
         {
-            <div class="alert alert-success alert-dismissible fade show">
+            <div class="alert alert-success alert-dismissible fade show site-alert">
                 @TempData["SuccessMessage"]
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             </div>
@@ -219,7 +432,7 @@
 
         @if (TempData["ErrorMessage"] != null)
         {
-            <div class="alert alert-danger alert-dismissible fade show">
+            <div class="alert alert-danger alert-dismissible fade show site-alert">
                 @TempData["ErrorMessage"]
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             </div>
@@ -227,7 +440,7 @@
 
         @if (TempData["InfoMessage"] != null)
         {
-            <div class="alert alert-info alert-dismissible fade show">
+            <div class="alert alert-info alert-dismissible fade show site-alert">
                 @TempData["InfoMessage"]
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             </div>
@@ -236,9 +449,53 @@
         @RenderBody()
     </main>
 
-    <footer class="border-top py-3 bg-white">
-        <div class="container text-muted small">
-            © @DateTime.Now.Year - Đồ Gỗ Quảng Thủy
+    @* ===== ĐÃ SỬA: footer mới ===== *@
+    <footer class="site-footer">
+        <div class="container py-5">
+            <div class="row g-4">
+                <div class="col-lg-4">
+                    <h5 class="footer-title">Đồ Gỗ Quảng Thủy</h5>
+                    <p class="footer-text mb-3">
+                        Chuyên cung cấp các sản phẩm nội thất gỗ với định hướng hiện đại, bền đẹp
+                        và phù hợp nhiều không gian sống.
+                    </p>
+                    <div class="footer-text">
+                        Tập trung vào trải nghiệm chọn sản phẩm dễ dàng, rõ ràng và thuận tiện hơn.
+                    </div>
+                </div>
+
+                <div class="col-lg-2 col-md-4">
+                    <h6 class="footer-title">Điều hướng</h6>
+                    <div class="d-flex flex-column gap-2">
+                        <a class="footer-link" asp-controller="Home" asp-action="Index">Trang chủ</a>
+                        <a class="footer-link" asp-controller="Product" asp-action="Index">Sản phẩm</a>
+                        <a class="footer-link" asp-controller="Order" asp-action="Track">Theo dõi đơn</a>
+                    </div>
+                </div>
+
+                <div class="col-lg-3 col-md-4">
+                    <h6 class="footer-title">Khách hàng</h6>
+                    <div class="d-flex flex-column gap-2">
+                        <a class="footer-link" asp-controller="Cart" asp-action="Index">Giỏ hàng</a>
+                        <a class="footer-link" asp-controller="Order" asp-action="Index">Đơn của tôi</a>
+                        <a class="footer-link" asp-controller="Account" asp-action="Login">Tài khoản</a>
+                    </div>
+                </div>
+
+                <div class="col-lg-3 col-md-4">
+                    <h6 class="footer-title">Liên hệ</h6>
+                    <div class="footer-text">Email: support@dogoquangthuy.vn</div>
+                    <div class="footer-text">Hotline: 0123 456 789</div>
+                    <div class="footer-text">Giờ làm việc: 08:00 - 17:30</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer-bottom">
+            <div class="container py-3 d-flex flex-column flex-md-row justify-content-between align-items-center gap-2">
+                <div>© @DateTime.Now.Year - Đồ Gỗ Quảng Thủy. All rights reserved.</div>
+                <div>Thiết kế giao diện theo phong cách nội thất hiện đại.</div>
+            </div>
         </div>
     </footer>
 
