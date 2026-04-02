@@ -20,6 +20,7 @@ public partial class QlbhContext : DbContext
     public virtual DbSet<Order> Orders => Set<Order>();
     public virtual DbSet<OrderItem> OrderItems => Set<OrderItem>();
     public virtual DbSet<InventoryTransaction> InventoryTransactions => Set<InventoryTransaction>();
+    public virtual DbSet<CustomOrderRequest> CustomOrderRequests { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -191,6 +192,46 @@ public partial class QlbhContext : DbContext
                 .OnDelete(DeleteBehavior.Cascade);
         });
 
+
+        modelBuilder.Entity<CustomOrderRequest>(entity =>
+        {
+            entity.ToTable("CustomOrderRequest");
+
+            entity.HasKey(e => e.Id);
+
+            entity.HasIndex(e => e.RequestCode).IsUnique();
+            entity.HasIndex(e => e.Status);
+
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.RequestCode).HasColumnName("request_code").HasMaxLength(100);
+            entity.Property(e => e.UserId).HasColumnName("user_id");
+            entity.Property(e => e.ProductId).HasColumnName("product_id");
+            entity.Property(e => e.CustomerName).HasColumnName("customer_name").HasMaxLength(255);
+            entity.Property(e => e.Email).HasColumnName("email").HasMaxLength(255);
+            entity.Property(e => e.Phone).HasColumnName("phone").HasMaxLength(50);
+            entity.Property(e => e.RequestedProductName).HasColumnName("requested_product_name").HasMaxLength(255);
+            entity.Property(e => e.WoodType).HasColumnName("wood_type").HasMaxLength(255);
+            entity.Property(e => e.Dimensions).HasColumnName("dimensions").HasMaxLength(255);
+            entity.Property(e => e.Quantity).HasColumnName("quantity");
+            entity.Property(e => e.EstimatedBudget).HasColumnName("estimated_budget").HasColumnType("decimal(18,2)");
+            entity.Property(e => e.DesiredDeliveryDate).HasColumnName("desired_delivery_date");
+            entity.Property(e => e.Description).HasColumnName("description").HasMaxLength(2000);
+            entity.Property(e => e.ReferenceImageUrls).HasColumnName("reference_image_urls").HasMaxLength(2000);
+            entity.Property(e => e.Status).HasColumnName("status").HasMaxLength(50);
+            entity.Property(e => e.AdminNote).HasColumnName("admin_note").HasMaxLength(1000);
+            entity.Property(e => e.CreatedAt).HasColumnName("created_at");
+            entity.Property(e => e.UpdatedAt).HasColumnName("updated_at");
+
+            entity.HasOne(e => e.User)
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            entity.HasOne(e => e.Product)
+                .WithMany()
+                .HasForeignKey(e => e.ProductId)
+                .OnDelete(DeleteBehavior.SetNull);
+        });
         OnModelCreatingPartial(modelBuilder);
     }
 

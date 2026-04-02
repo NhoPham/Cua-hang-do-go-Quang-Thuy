@@ -1,17 +1,40 @@
 @{
-    ViewData["Title"] = "Đã gửi yêu cầu";
+    ViewData["Title"] = "Gửi yêu cầu thành công";
+    var code = ViewBag.RequestCode as string;
 }
 
 <div class="container py-5">
-    <div class="mx-auto" style="max-width:720px;">
-        <div class="card border-0 shadow-sm rounded-4">
-            <div class="card-body p-5 text-center">
-                <h1 class="h3 mb-3">Gửi yêu cầu thành công</h1>
-                <p class="text-muted mb-2">Cửa hàng đã nhận được yêu cầu đặt hàng theo yêu cầu của bạn.</p>
-                <p class="mb-4">Mã yêu cầu: <strong>@ViewBag.RequestCode</strong></p>
-                <div class="d-flex justify-content-center gap-2 flex-wrap">
-                    <a asp-controller="Home" asp-action="Index" class="btn btn-dark">Về trang chủ</a>
-                    <a asp-controller="Product" asp-action="Index" class="btn btn-outline-secondary">Xem sản phẩm</a>
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow-sm border-0 rounded-4">
+                <div class="card-body p-4 p-lg-5 text-center">
+                    <div class="mb-3" style="font-size:48px;">✅</div>
+                    <h1 class="h3 fw-bold mb-3">Gửi yêu cầu thành công</h1>
+                    <p class="text-muted mb-3">
+                        Cửa hàng đã nhận được yêu cầu đặt hàng theo yêu cầu của bạn.
+                    </p>
+
+                    <div class="alert alert-success rounded-4">
+                        Mã yêu cầu của bạn: <strong>@code</strong>
+                    </div>
+
+                    <p class="text-muted">
+                        Vui lòng lưu lại mã này để tra cứu tiến độ xử lý sau.
+                    </p>
+
+                    <div class="d-flex justify-content-center flex-wrap gap-2 mt-4">
+                        <a asp-controller="CustomOrder"
+                           asp-action="Lookup"
+                           class="btn btn-dark rounded-pill px-4">
+                            Xem yêu cầu của tôi
+                        </a>
+
+                        <a asp-controller="Home"
+                           asp-action="Index"
+                           class="btn btn-outline-secondary rounded-pill px-4">
+                            Về trang chủ
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>

@@ -1,0 +1,98 @@
+@model QLBH.Models.CustomOrderRequest
+
+@{
+    ViewData["Title"] = "Chi tiết yêu cầu";
+
+    string GetStatusText(string status) => (status ?? "").ToLower() switch
+    {
+        "new" => "Mới tiếp nhận",
+        "consulting" => "Đang tư vấn",
+        "quoted" => "Đã báo giá",
+        "approved" => "Đã chốt",
+        "cancelled" => "Đã hủy",
+        _ => "Đang xử lý"
+    };
+}
+
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-xl-9">
+            <div class="card shadow-sm border-0 rounded-4 mb-4">
+                <div class="card-body p-4 p-lg-5">
+                    <div class="d-flex flex-wrap justify-content-between gap-3 align-items-start">
+                        <div>
+                            <div class="text-muted small mb-2">Mã yêu cầu</div>
+                            <h1 class="h3 fw-bold mb-1">@Model.RequestCode</h1>
+                            <div class="text-muted">@Model.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</div>
+                        </div>
+
+                        <div>
+                            <span class="badge bg-dark rounded-pill px-3 py-2">
+                                @GetStatusText(Model.Status)
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row g-4">
+                <div class="col-lg-7">
+                    <div class="card shadow-sm border-0 rounded-4 h-100">
+                        <div class="card-body p-4">
+                            <h2 class="h5 fw-bold mb-3">Thông tin yêu cầu</h2>
+
+                            <div class="mb-3"><strong>Khách hàng:</strong> @Model.CustomerName</div>
+                            <div class="mb-3"><strong>Email:</strong> @Model.Email</div>
+                            <div class="mb-3"><strong>Số điện thoại:</strong> @Model.Phone</div>
+                            <div class="mb-3"><strong>Sản phẩm mong muốn:</strong> @Model.RequestedProductName</div>
+                            <div class="mb-3"><strong>Loại gỗ:</strong> @(string.IsNullOrWhiteSpace(Model.WoodType) ? "Chưa cung cấp" : Model.WoodType)</div>
+                            <div class="mb-3"><strong>Kích thước:</strong> @(string.IsNullOrWhiteSpace(Model.Dimensions) ? "Chưa cung cấp" : Model.Dimensions)</div>
+                            <div class="mb-3"><strong>Số lượng:</strong> @Model.Quantity</div>
+                            <div class="mb-3"><strong>Ngân sách:</strong> @(Model.EstimatedBudget.HasValue ? Model.EstimatedBudget.Value.ToString("N0") + " đ" : "Chưa cung cấp")</div>
+                            <div class="mb-3"><strong>Ngày mong muốn nhận:</strong> @(Model.DesiredDeliveryDate?.ToString("dd/MM/yyyy") ?? "Chưa cung cấp")</div>
+
+                            <div class="mb-0">
+                                <strong>Mô tả chi tiết:</strong>
+                                <div class="mt-2 text-muted">@Model.Description</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-5">
+                    <div class="card shadow-sm border-0 rounded-4 mb-4">
+                        <div class="card-body p-4">
+                            <h2 class="h5 fw-bold mb-3">Tiến độ xử lý</h2>
+                            <p class="mb-0 text-muted">
+                                Trạng thái hiện tại: <strong>@GetStatusText(Model.Status)</strong>
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="card shadow-sm border-0 rounded-4">
+                        <div class="card-body p-4">
+                            <h2 class="h5 fw-bold mb-3">Ghi chú từ cửa hàng</h2>
+                            <div class="text-muted">
+                                @(string.IsNullOrWhiteSpace(Model.AdminNote) ? "Chưa có ghi chú từ cửa hàng." : Model.AdminNote)
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="d-flex gap-2 flex-wrap mt-4">
+                <a asp-controller="CustomOrder"
+                   asp-action="Lookup"
+                   class="btn btn-outline-secondary rounded-pill px-4">
+                    Tra cứu yêu cầu khác
+                </a>
+
+                <a asp-controller="Home"
+                   asp-action="Index"
+                   class="btn btn-dark rounded-pill px-4">
+                    Về trang chủ
+                </a>
+            </div>
+        </div>
+    </div>
+</div>

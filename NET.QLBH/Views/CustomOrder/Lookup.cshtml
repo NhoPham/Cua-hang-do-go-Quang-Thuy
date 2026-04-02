@@ -1,0 +1,49 @@
+@{
+    ViewData["Title"] = "Tra cứu yêu cầu";
+}
+
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-7">
+            <div class="card shadow-sm border-0 rounded-4">
+                <div class="card-body p-4 p-lg-5">
+                    <h1 class="h3 fw-bold mb-3">Tra cứu yêu cầu đặt hàng</h1>
+                    <p class="text-muted mb-4">
+                        Nhập mã yêu cầu và email bạn đã dùng khi gửi yêu cầu.
+                    </p>
+
+                    @if (TempData["ErrorMessage"] != null)
+                    {
+                        <div class="alert alert-danger rounded-4">@TempData["ErrorMessage"]</div>
+                    }
+
+                    <form asp-action="Lookup" method="post">
+                        @Html.AntiForgeryToken()
+
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Mã yêu cầu</label>
+                            <input name="code" class="form-control rounded-3" placeholder="Ví dụ: YC20260402114512345" />
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label fw-semibold">Email</label>
+                            <input name="email" type="email" class="form-control rounded-3" placeholder="ban@example.com" />
+                        </div>
+
+                        <div class="d-flex gap-2 flex-wrap">
+                            <button type="submit" class="btn btn-dark rounded-pill px-4">
+                                Xem yêu cầu
+                            </button>
+
+                            <a asp-controller="CustomOrder"
+                               asp-action="Create"
+                               class="btn btn-outline-secondary rounded-pill px-4">
+                                Gửi yêu cầu mới
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

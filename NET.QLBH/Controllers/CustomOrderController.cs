@@ -103,6 +103,66 @@ public class CustomOrderController : Controller
         return View();
     }
 
+    [HttpGet]
+    [AllowAnonymous]
+    public IActionResult Lookup()
+    {
+        return View();
+    }
+
+    [HttpPost]
+    [AllowAnonymous]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Lookup(string code, string email)
+    {
+        code = (code ?? string.Empty).Trim();
+        email = (email ?? string.Empty).Trim().ToLower();
+
+        if (string.IsNullOrWhiteSpace(code) || string.IsNullOrWhiteSpace(email))
+        {
+            TempData["ErrorMessage"] = "Vui lòng nhập mã yêu cầu và email.";
+            return View();
+        }
+
+        var request = await _context.CustomOrderRequests
+            .Include(x => x.Product)
+            .FirstOrDefaultAsync(x => x.RequestCode == code && x.Email == email);
+
+        if (request == null)
+        {
+            TempData["ErrorMessage"] = "Không tìm thấy yêu cầu phù hợp.";
+            return View();
+        }
+
+        return RedirectToAction(nameof(Details), new { code = request.RequestCode, email = request.Email });
+    }
+
+    [HttpGet]
+    [AllowAnonymous]
+    public async Task<IActionResult> Details(string code, string email)
+    {
+        code = (code ?? string.Empty).Trim();
+        email = (email ?? string.Empty).Trim().ToLower();
+
+        if (string.IsNullOrWhiteSpace(code) || string.IsNullOrWhiteSpace(email))
+        {
+            TempData["ErrorMessage"] = "Thiếu mã yêu cầu hoặc email.";
+            return RedirectToAction(nameof(Lookup));
+        }
+
+        var request = await _context.CustomOrderRequests
+            .Include(x => x.Product)
+            .FirstOrDefaultAsync(x => x.RequestCode == code && x.Email == email);
+
+        if (request == null)
+        {
+            TempData["ErrorMessage"] = "Không tìm thấy yêu cầu.";
+            return RedirectToAction(nameof(Lookup));
+        }
+
+        return View(request);
+    }
+
     [Authorize(Roles = "admin")]
     [HttpGet]
     public async Task<IActionResult> Admin(string? status, string? keyword)
