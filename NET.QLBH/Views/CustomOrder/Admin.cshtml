@@ -1,0 +1,92 @@
+@model IEnumerable<QLBH.Models.CustomOrderRequest>
+@{
+    ViewData["Title"] = "Quản lý yêu cầu đặt hàng";
+    var keyword = ViewBag.Keyword as string;
+    var status = ViewBag.Status as string;
+}
+
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-1">Quản lý yêu cầu đặt hàng</h1>
+            <p class="text-muted mb-0">Theo dõi yêu cầu đóng mới, chỉnh sửa và báo giá riêng cho khách.</p>
+        </div>
+    </div>
+
+    <form method="get" class="row g-3 mb-4">
+        <div class="col-md-5">
+            <input name="keyword" value="@keyword" class="form-control" placeholder="Tìm theo mã, tên khách, email, sản phẩm..." />
+        </div>
+        <div class="col-md-3">
+            <select name="status" class="form-select">
+                <option value="">Tất cả trạng thái</option>
+                <option value="new" selected="@(status == "new")">Mới</option>
+                <option value="consulting" selected="@(status == "consulting")">Đang tư vấn</option>
+                <option value="quoted" selected="@(status == "quoted")">Đã báo giá</option>
+                <option value="approved" selected="@(status == "approved")">Đã chốt</option>
+                <option value="cancelled" selected="@(status == "cancelled")">Đã hủy</option>
+            </select>
+        </div>
+        <div class="col-md-4 d-flex gap-2">
+            <button type="submit" class="btn btn-dark">Lọc</button>
+            <a asp-action="Admin" class="btn btn-outline-secondary">Đặt lại</a>
+        </div>
+    </form>
+
+    <div class="row g-4">
+        @foreach (var item in Model)
+        {
+            <div class="col-12">
+                <div class="card border-0 shadow-sm rounded-4">
+                    <div class="card-body p-4">
+                        <div class="d-flex flex-wrap justify-content-between gap-3 mb-3">
+                            <div>
+                                <div class="small text-muted">@item.RequestCode</div>
+                                <div class="fw-semibold fs-5">@item.RequestedProductName</div>
+                                <div class="text-muted">@item.CustomerName - @item.Email - @item.Phone</div>
+                            </div>
+                            <div class="text-muted small text-end">
+                                <div>Tạo lúc: @item.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</div>
+                                <div>Ngân sách: @(item.EstimatedBudget.HasValue ? item.EstimatedBudget.Value.ToString("N0") + " đ" : "Chưa có")</div>
+                            </div>
+                        </div>
+
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-3"><strong>Loại gỗ:</strong> @(item.WoodType ?? "Chưa có")</div>
+                            <div class="col-md-3"><strong>Kích thước:</strong> @(item.Dimensions ?? "Chưa có")</div>
+                            <div class="col-md-2"><strong>Số lượng:</strong> @item.Quantity</div>
+                            <div class="col-md-4"><strong>Nhận hàng mong muốn:</strong> @(item.DesiredDeliveryDate?.ToString("dd/MM/yyyy") ?? "Chưa có")</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <strong>Mô tả:</strong>
+                            <div class="text-muted mt-1">@item.Description</div>
+                        </div>
+
+                        <form asp-action="UpdateStatus" method="post" class="row g-3 align-items-end">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="id" value="@item.Id" />
+                            <div class="col-md-3">
+                                <label class="form-label">Trạng thái</label>
+                                <select name="status" class="form-select">
+                                    <option value="new" selected="@(item.Status == "new")">Mới</option>
+                                    <option value="consulting" selected="@(item.Status == "consulting")">Đang tư vấn</option>
+                                    <option value="quoted" selected="@(item.Status == "quoted")">Đã báo giá</option>
+                                    <option value="approved" selected="@(item.Status == "approved")">Đã chốt</option>
+                                    <option value="cancelled" selected="@(item.Status == "cancelled")">Đã hủy</option>
+                                </select>
+                            </div>
+                            <div class="col-md-7">
+                                <label class="form-label">Ghi chú admin</label>
+                                <input name="adminNote" value="@item.AdminNote" class="form-control" placeholder="Ví dụ: đã gọi lại, hẹn đo đạc, báo giá lần 1..." />
+                            </div>
+                            <div class="col-md-2 d-grid">
+                                <button type="submit" class="btn btn-dark">Lưu</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>
