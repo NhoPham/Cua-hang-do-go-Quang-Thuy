@@ -1,0 +1,561 @@
+﻿@{
+    ViewData["Title"] = "Trang chủ";
+    var isAdmin = User.IsInRole("admin");
+}
+
+<style>
+    .home-sync {
+        --wood-950: #241913;
+        --wood-900: #2f2219;
+        --wood-800: #4c392b;
+        --wood-700: #6f533d;
+        --wood-500: #b89268;
+        --wood-300: #eadac8;
+        --wood-200: #f5ede5;
+        --wood-100: #fbf7f2;
+        --wood-border: #e7d9ca;
+        --wood-text: #4f3d2f;
+        --wood-muted: #8f7b67;
+    }
+
+    .home-sync .hero {
+        position: relative;
+        overflow: hidden;
+        border-radius: 32px;
+        padding: 2rem;
+        background: linear-gradient(135deg, rgba(36,25,19,.98), rgba(79,59,43,.92));
+        color: #fff;
+        box-shadow: 0 24px 60px rgba(36, 25, 19, .18);
+    }
+
+    .home-sync .hero::before,
+    .home-sync .hero::after {
+        content: "";
+        position: absolute;
+        border-radius: 999px;
+        background: rgba(255,255,255,.06);
+        pointer-events: none;
+    }
+
+    .home-sync .hero::before {
+        width: 240px;
+        height: 240px;
+        top: -60px;
+        right: -40px;
+    }
+
+    .home-sync .hero::after {
+        width: 160px;
+        height: 160px;
+        bottom: -40px;
+        right: 120px;
+        background: rgba(184,146,104,.15);
+    }
+
+    .home-sync .eyebrow {
+        display: inline-flex;
+        align-items: center;
+        gap: .5rem;
+        padding: .55rem .95rem;
+        border-radius: 999px;
+        background: rgba(255,255,255,.09);
+        color: #f6e7d6;
+        font-size: .95rem;
+        border: 1px solid rgba(255,255,255,.08);
+    }
+
+    .home-sync .hero-title {
+        font-size: clamp(2.2rem, 4vw, 4rem);
+        line-height: 1.1;
+        font-weight: 800;
+        letter-spacing: -.03em;
+    }
+
+    .home-sync .hero-text {
+        max-width: 720px;
+        color: rgba(255,255,255,.78);
+        font-size: 1.05rem;
+        line-height: 1.8;
+    }
+
+    .home-sync .hero-actions .btn,
+    .home-sync .admin-actions .btn,
+    .home-sync .cta-actions .btn {
+        min-width: 180px;
+        border-radius: 14px;
+        padding: .82rem 1.2rem;
+        font-weight: 600;
+    }
+
+    .home-sync .btn-wood {
+        background: var(--wood-500);
+        border: 1px solid var(--wood-500);
+        color: var(--wood-950);
+    }
+
+    .home-sync .btn-wood:hover {
+        background: #a88055;
+        border-color: #a88055;
+        color: var(--wood-950);
+    }
+
+    .home-sync .btn-glass {
+        background: rgba(255,255,255,.06);
+        color: #fff;
+        border: 1px solid rgba(255,255,255,.15);
+    }
+
+    .home-sync .btn-glass:hover {
+        background: rgba(255,255,255,.12);
+        color: #fff;
+        border-color: rgba(255,255,255,.25);
+    }
+
+    .home-sync .hero-panel,
+    .home-sync .section-panel,
+    .home-sync .feature-card,
+    .home-sync .category-card,
+    .home-sync .cta-panel {
+        border-radius: 28px;
+        border: 1px solid var(--wood-border);
+        background: #fff;
+        box-shadow: 0 14px 34px rgba(36, 25, 19, .07);
+    }
+
+    .home-sync .hero-panel {
+        background: rgba(255,255,255,.08);
+        border-color: rgba(255,255,255,.09);
+        color: #fff;
+        padding: 1.5rem;
+        backdrop-filter: blur(8px);
+        box-shadow: none;
+    }
+
+    .home-sync .hero-stat-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0,1fr));
+        gap: .9rem;
+    }
+
+    .home-sync .hero-stat {
+        border-radius: 18px;
+        padding: 1rem;
+        background: rgba(255,255,255,.06);
+        border: 1px solid rgba(255,255,255,.08);
+    }
+
+    .home-sync .hero-stat small {
+        display: block;
+        color: rgba(255,255,255,.68);
+        margin-bottom: .3rem;
+    }
+
+    .home-sync .hero-stat strong {
+        font-size: 1rem;
+    }
+
+    .home-sync .section-heading {
+        margin-bottom: 1.5rem;
+    }
+
+    .home-sync .section-title {
+        color: var(--wood-text);
+        font-size: clamp(1.8rem, 3vw, 2.4rem);
+        font-weight: 800;
+        letter-spacing: -.02em;
+        margin-bottom: .6rem;
+    }
+
+    .home-sync .section-text {
+        max-width: 760px;
+        color: var(--wood-muted);
+        line-height: 1.8;
+        margin-bottom: 0;
+    }
+
+    .home-sync .category-card {
+        overflow: hidden;
+        height: 100%;
+        transition: transform .25s ease, box-shadow .25s ease;
+    }
+
+    .home-sync .category-card:hover {
+        transform: translateY(-6px);
+        box-shadow: 0 18px 38px rgba(36, 25, 19, .11);
+    }
+
+    .home-sync .category-visual {
+        min-height: 200px;
+        padding: 1.5rem;
+        color: #fff;
+        background: linear-gradient(135deg, rgba(36,25,19,.96), rgba(111,83,61,.78));
+        display: flex;
+        align-items: end;
+        position: relative;
+    }
+
+    .home-sync .category-visual::after {
+        content: "";
+        position: absolute;
+        top: -24px;
+        right: -24px;
+        width: 110px;
+        height: 110px;
+        border-radius: 50%;
+        background: rgba(255,255,255,.08);
+    }
+
+    .home-sync .category-badge,
+    .home-sync .feature-icon {
+        width: 58px;
+        height: 58px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 18px;
+        font-size: 1.4rem;
+        margin-bottom: 1rem;
+    }
+
+    .home-sync .category-badge {
+        background: rgba(255,255,255,.13);
+    }
+
+    .home-sync .feature-card {
+        padding: 1.7rem;
+        height: 100%;
+    }
+
+    .home-sync .feature-icon {
+        background: linear-gradient(135deg, var(--wood-200), #fff7ee);
+        color: var(--wood-700);
+    }
+
+    .home-sync .feature-card h5,
+    .home-sync .category-card h5,
+    .home-sync .showcase-card h5,
+    .home-sync .admin-panel h5,
+    .home-sync .cta-panel h5 {
+        color: var(--wood-text);
+        font-weight: 700;
+    }
+
+    .home-sync .feature-card p,
+    .home-sync .category-card p,
+    .home-sync .showcase-card p,
+    .home-sync .admin-panel p,
+    .home-sync .cta-panel p,
+    .home-sync .showcase-item {
+        color: var(--wood-muted);
+        line-height: 1.8;
+    }
+
+    .home-sync .showcase-card {
+        height: 100%;
+        padding: 1.8rem;
+        background: linear-gradient(135deg, #fff, var(--wood-100));
+    }
+
+    .home-sync .showcase-item {
+        padding: 1rem 1.1rem;
+        border-radius: 18px;
+        border: 1px solid var(--wood-border);
+        background: #fff;
+    }
+
+    .home-sync .chip {
+        display: inline-flex;
+        align-items: center;
+        gap: .35rem;
+        padding: .62rem .9rem;
+        border-radius: 999px;
+        background: var(--wood-200);
+        color: var(--wood-text);
+        font-weight: 600;
+        font-size: .92rem;
+    }
+
+    .home-sync .admin-panel {
+        position: relative;
+        overflow: hidden;
+        border-radius: 30px;
+        padding: 2rem;
+        background: linear-gradient(135deg, var(--wood-950), var(--wood-800));
+        color: #fff;
+        box-shadow: 0 20px 44px rgba(36, 25, 19, .18);
+    }
+
+    .home-sync .admin-panel::after {
+        content: "";
+        position: absolute;
+        width: 170px;
+        height: 170px;
+        right: -40px;
+        bottom: -50px;
+        border-radius: 50%;
+        background: rgba(255,255,255,.06);
+    }
+
+    .home-sync .admin-panel p {
+        color: rgba(255,255,255,.72);
+    }
+
+    .home-sync .cta-panel {
+        padding: 2rem;
+        background: linear-gradient(135deg, #fff, var(--wood-100));
+    }
+
+    @@media (max-width: 991.98px) {
+        .home-sync .hero {
+            border-radius: 24px;
+        }
+    }
+
+    @@media (max-width: 767.98px) {
+        .home-sync .hero,
+        .home-sync .admin-panel,
+        .home-sync .cta-panel,
+        .home-sync .showcase-card,
+        .home-sync .feature-card {
+            padding: 1.35rem;
+        }
+
+        .home-sync .hero-stat-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .home-sync .hero-actions .btn,
+        .home-sync .admin-actions .btn,
+        .home-sync .cta-actions .btn {
+            width: 100%;
+        }
+    }
+</style>
+
+<div class="home-sync">
+    <section class="hero mb-5">
+        <div class="row align-items-center g-4 position-relative">
+            <div class="col-lg-7">
+                <div class="eyebrow mb-3">
+                    <span>•</span>
+                    <span>Nội thất gỗ cho không gian sống hiện đại</span>
+                </div>
+
+                <h1 class="hero-title mb-3">
+                    Tối giản trong thiết kế,<br />
+                    ấm áp trong trải nghiệm sống
+                </h1>
+
+                <p class="hero-text mb-4">
+                    Khám phá các dòng bàn, ghế, tủ, giường và kệ với phong cách sang trọng,
+                    tinh gọn và dễ ứng dụng cho nhiều không gian nhà ở, văn phòng hay căn hộ hiện đại.
+                </p>
+
+                <div class="hero-actions d-flex flex-wrap gap-3">
+                    <a asp-controller="Product" asp-action="Index" class="btn btn-wood">
+                        Xem toàn bộ sản phẩm
+                    </a>
+                    <a asp-controller="Order" asp-action="Track" class="btn btn-glass">
+                        Theo dõi đơn hàng
+                    </a>
+                </div>
+            </div>
+
+            <div class="col-lg-5">
+                <div class="hero-panel">
+                    <h5 class="text-white fw-bold mb-3">Điểm nhấn của cửa hàng</h5>
+
+                    <div class="hero-stat-grid">
+                        <div class="hero-stat">
+                            <small>Phong cách</small>
+                            <strong>Sang • Tinh gọn • Ấm</strong>
+                        </div>
+                        <div class="hero-stat">
+                            <small>Danh mục</small>
+                            <strong>Bàn • Ghế • Tủ • Giường</strong>
+                        </div>
+                        <div class="hero-stat">
+                            <small>Trải nghiệm</small>
+                            <strong>Dễ tìm, dễ lọc, dễ mua</strong>
+                        </div>
+                        <div class="hero-stat">
+                            <small>Quản trị</small>
+                            <strong>Tối ưu cho admin</strong>
+                        </div>
+                    </div>
+
+                    <p class="mt-4 mb-0 text-white-50">
+                        Giao diện được thiết kế đồng bộ với tông gỗ ấm,
+                        giúp cảm giác thương hiệu rõ ràng hơn ở cả phía khách hàng lẫn quản trị.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="mb-5">
+        <div class="section-heading">
+            <h2 class="section-title">Danh mục nổi bật</h2>
+            <p class="section-text">
+                Các nhóm sản phẩm chính được sắp xếp rõ ràng để khách hàng dễ định hướng và bắt đầu mua sắm nhanh hơn.
+            </p>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-lg-4 col-md-6">
+                <div class="category-card">
+                    <div class="category-visual">
+                        <div>
+                            <div class="category-badge">🪑</div>
+                            <h5 class="text-white mb-2">Bàn &amp; Ghế</h5>
+                            <div class="text-white-50">Tinh gọn cho phòng ăn, phòng làm việc, phòng khách</div>
+                        </div>
+                    </div>
+                    <div class="p-4">
+                        <p class="mb-4">Nhóm sản phẩm phù hợp cho nhiều phong cách sống hiện đại, từ gia đình đến không gian làm việc.</p>
+                        <a asp-controller="Product" asp-action="Index" class="btn btn-outline-dark rounded-4 px-4">Khám phá sản phẩm</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-4 col-md-6">
+                <div class="category-card">
+                    <div class="category-visual">
+                        <div>
+                            <div class="category-badge">🛏️</div>
+                            <h5 class="text-white mb-2">Giường &amp; Tủ</h5>
+                            <div class="text-white-50">Đề cao công năng, độ bền và sự ấm cúng</div>
+                        </div>
+                    </div>
+                    <div class="p-4">
+                        <p class="mb-4">Phù hợp cho phòng ngủ cần sự cân bằng giữa thẩm mỹ, không gian lưu trữ và cảm giác dễ chịu.</p>
+                        <a asp-controller="Product" asp-action="Index" class="btn btn-outline-dark rounded-4 px-4">Xem bộ sưu tập</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-4 col-md-6">
+                <div class="category-card">
+                    <div class="category-visual">
+                        <div>
+                            <div class="category-badge">🪵</div>
+                            <h5 class="text-white mb-2">Kệ &amp; Nội thất phụ trợ</h5>
+                            <div class="text-white-50">Bổ sung hoàn thiện cho không gian sống</div>
+                        </div>
+                    </div>
+                    <div class="p-4">
+                        <p class="mb-4">Các mẫu kệ, tủ nhỏ, chi tiết nội thất phụ trợ giúp không gian thêm gọn gàng và có điểm nhấn.</p>
+                        <a asp-controller="Product" asp-action="Index" class="btn btn-outline-dark rounded-4 px-4">Xem ngay</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="mb-5">
+        <div class="section-heading">
+            <h2 class="section-title">Vì sao nên chọn Đồ Gỗ Quảng Thủy</h2>
+            <p class="section-text">
+                Không chỉ là nơi trưng bày sản phẩm, đây còn là hệ thống giúp khách hàng chọn lựa nhanh và admin quản lý hiệu quả hơn.
+            </p>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-lg-4">
+                <div class="feature-card">
+                    <div class="feature-icon">✨</div>
+                    <h5>Giao diện sang và rõ ràng</h5>
+                    <p class="mb-0">Trình bày hiện đại, khoảng trắng thoáng, màu sắc ấm áp giúp hình ảnh nội thất trở nên nổi bật hơn.</p>
+                </div>
+            </div>
+            <div class="col-lg-4">
+                <div class="feature-card">
+                    <div class="feature-icon">🔎</div>
+                    <h5>Tìm kiếm và lọc thuận tiện</h5>
+                    <p class="mb-0">Người dùng dễ tìm sản phẩm theo tên, danh mục, khoảng giá, tình trạng còn hàng và cách sắp xếp phù hợp.</p>
+                </div>
+            </div>
+            <div class="col-lg-4">
+                <div class="feature-card">
+                    <div class="feature-icon">📦</div>
+                    <h5>Theo dõi đơn và quản trị tốt hơn</h5>
+                    <p class="mb-0">Hỗ trợ giỏ hàng, đơn hàng, theo dõi trạng thái và giao diện admin tách biệt để quản lý dễ dàng hơn.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="mb-5">
+        <div class="row g-4 align-items-stretch">
+            <div class="col-lg-6">
+                <div class="showcase-card">
+                    <h2 class="section-title" style="font-size: 1.8rem;">Không gian sống được hoàn thiện từ chi tiết</h2>
+                    <p class="section-text mb-4">
+                        Mỗi nhóm sản phẩm được định hướng theo cảm giác “gọn - ấm - sang”, phù hợp với nhu cầu ở thực tế và trải nghiệm sử dụng hằng ngày.
+                    </p>
+
+                    <div class="d-grid gap-3">
+                        <div class="showcase-item"><strong class="d-block text-dark mb-1">Phòng khách</strong>Bàn trà, kệ tivi, ghế và chi tiết trang trí tạo điểm nhấn tinh tế.</div>
+                        <div class="showcase-item"><strong class="d-block text-dark mb-1">Phòng ngủ</strong>Giường, tủ, tab đầu giường tập trung vào cảm giác ấm cúng và dễ chịu.</div>
+                        <div class="showcase-item"><strong class="d-block text-dark mb-1">Phòng ăn &amp; làm việc</strong>Bàn ghế gọn gàng, dễ phối cùng nhiều kiểu không gian hiện đại.</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-6">
+                <div class="showcase-card d-flex flex-column justify-content-center h-100">
+                    <div class="mb-3">
+                        <span class="chip">Thiết kế &amp; Trải nghiệm</span>
+                    </div>
+                    <h2 class="section-title" style="font-size: 1.8rem;">Tập trung vào trải nghiệm mua sắm dễ chịu</h2>
+                    <p class="section-text mb-4">
+                        Trang sản phẩm đã được tối ưu theo hai hướng riêng: khách hàng xem dạng card trực quan,
+                        còn admin xem dạng danh sách để quản trị nhanh hơn.
+                    </p>
+                    <div class="d-flex flex-wrap gap-2">
+                        <span class="chip">Card cho khách hàng</span>
+                        <span class="chip">Danh sách cho admin</span>
+                        <span class="chip">Bộ lọc nâng cao</span>
+                        <span class="chip">Icon giỏ hàng responsive</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    @if (isAdmin)
+    {
+        <section class="mb-5">
+            <div class="admin-panel">
+                <div class="row align-items-center g-4 position-relative">
+                    <div class="col-lg-8">
+                        <h2 class="fw-bold mb-2">Khu vực quản trị nhanh</h2>
+                        <p class="mb-0">Truy cập nhanh đến các khu vực quản trị sản phẩm, khách hàng, đơn hàng, kho và thống kê.</p>
+                    </div>
+                    <div class="col-lg-4">
+                        <div class="admin-actions d-grid gap-2">
+                            <a asp-controller="Product" asp-action="Index" class="btn btn-light text-dark fw-semibold">Quản lý sản phẩm</a>
+                            <a asp-controller="Admin" asp-action="Customers" class="btn btn-outline-light">Quản lý khách hàng</a>
+                            <a asp-controller="Order" asp-action="Admin" class="btn btn-outline-light">Quản lý đơn hàng</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    }
+
+    <section class="cta-panel mb-2">
+        <div class="row align-items-center g-4">
+            <div class="col-lg-8">
+                <h2 class="section-title mb-2">Bắt đầu khám phá bộ sưu tập nội thất</h2>
+                <p class="section-text">Xem toàn bộ sản phẩm, lọc theo nhu cầu của bạn và theo dõi đơn hàng ngay trên hệ thống.</p>
+            </div>
+            <div class="col-lg-4">
+                <div class="cta-actions d-grid d-md-flex gap-2 justify-content-lg-end">
+                    <a asp-controller="Product" asp-action="Index" class="btn btn-dark rounded-4 px-4">Đi đến sản phẩm</a>
+                    <a asp-controller="Order" asp-action="Track" class="btn btn-outline-secondary rounded-4 px-4">Tra cứu đơn</a>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>

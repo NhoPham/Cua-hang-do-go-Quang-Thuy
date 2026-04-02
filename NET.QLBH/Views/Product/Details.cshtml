@@ -1,0 +1,195 @@
+@model Product
+@using QLBH.Utils
+
+@{
+    ViewData["Title"] = "Chi tiết sản phẩm";
+    var imageList = ImageHelper.GetImageList(Model.Images);
+    var mainImage = imageList.FirstOrDefault() ?? "/images/default/no-image.jpg";
+}
+
+<div class="wood-page">
+    <section class="wood-page-hero mb-4">
+        <div class="row g-4 align-items-center position-relative" style="z-index:2;">
+            <div class="col-lg-8">
+                <div class="wood-page-kicker mb-3">
+                    <span>•</span>
+                    <span>Chi tiết sản phẩm</span>
+                </div>
+                <h1 class="wood-page-title">@Model.Name</h1>
+                <p class="wood-page-subtitle">
+                    @(string.IsNullOrWhiteSpace(Model.Description)
+                        ? "Thiết kế nội thất gỗ theo phong cách gọn, ấm và dễ kết hợp với nhiều không gian."
+                        : Model.Description)
+                </p>
+            </div>
+
+            <div class="col-lg-4">
+                <div class="wood-mini-stat-grid">
+                    <div class="wood-mini-stat">
+                        <div class="wood-mini-stat-label">Danh mục</div>
+                        <div class="wood-mini-stat-value">@(Model.Category?.Name ?? "Chưa phân loại")</div>
+                    </div>
+                    <div class="wood-mini-stat">
+                        <div class="wood-mini-stat-label">Tồn kho</div>
+                        <div class="wood-mini-stat-value">@Model.Stock sản phẩm</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="row g-4">
+        <div class="col-lg-7">
+            <div class="surface-card">
+                <div class="surface-card-body">
+                    <img id="productMainImage"
+                         src="@mainImage"
+                         alt="@Model.Name"
+                         class="wood-gallery-main border" />
+
+                    @if (imageList.Count > 1)
+                    {
+                        <div class="row row-cols-4 g-2 mt-3">
+                            @for (var i = 0; i < imageList.Count; i++)
+                            {
+                                var img = imageList[i];
+                                <div class="col">
+                                    <img src="@img"
+                                         alt="Ảnh @(i + 1) của @Model.Name"
+                                         class="wood-gallery-thumb @(i == 0 ? "active" : null)"
+                                         data-large-src="@img" />
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-5">
+            <div class="wood-sidebar-sticky d-grid gap-4">
+                <div class="surface-card-soft">
+                    <div class="surface-card-body-lg">
+                        <div class="d-flex flex-wrap gap-2 mb-3">
+                            <span class="wood-chip">@(Model.Category?.Name ?? "Nội thất gỗ")</span>
+
+                            @if (Model.Stock > 0)
+                            {
+                                <span class="wood-status-chip success">Còn hàng</span>
+                            }
+                            else
+                            {
+                                <span class="wood-status-chip danger">Hết hàng</span>
+                            }
+                        </div>
+
+                        <div class="display-6 fw-bold text-wood-brown mb-3">@Model.Price.ToString("N0") đ</div>
+
+                        <div class="wood-info-list mb-4">
+                            <div class="wood-info-item">
+                                <div class="wood-info-label">Mô tả sản phẩm</div>
+                                <div class="wood-info-value">
+                                    @(string.IsNullOrWhiteSpace(Model.Description) ? "Chưa có mô tả chi tiết cho sản phẩm này." : Model.Description)
+                                </div>
+                            </div>
+
+                            <div class="wood-info-item">
+                                <div class="wood-info-label">Số lượng tồn kho</div>
+                                <div class="wood-info-value">@Model.Stock</div>
+                            </div>
+                        </div>
+
+                        @if (User.Identity?.IsAuthenticated == true)
+                        {
+                            <form asp-controller="Cart" asp-action="Add" method="post" class="d-grid gap-3">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="productId" value="@Model.Id" />
+                                <input type="hidden" name="returnUrl" value="@Context.Request.Path" />
+
+                                <div>
+                                    <label class="wood-label" for="quantity">Số lượng</label>
+                                    <input id="quantity"
+                                           type="number"
+                                           name="quantity"
+                                           value="1"
+                                           min="1"
+                                           max="@Math.Max(Model.Stock, 1)"
+                                           class="form-control wood-input" />
+                                </div>
+
+                                <button class="btn wood-btn-primary" type="submit" @(Model.Stock <= 0 ? "disabled" : null)>
+                                    @(Model.Stock > 0 ? "Thêm vào giỏ hàng" : "Tạm hết hàng")
+                                </button>
+                            </form>
+                        }
+                        else
+                        {
+                            <a asp-controller="Account"
+                               asp-action="Login"
+                               asp-route-returnUrl="@Context.Request.Path"
+                               class="btn wood-btn-primary w-100">
+                                Đăng nhập để mua hàng
+                            </a>
+                        }
+
+                        <div class="d-grid gap-2 mt-3">
+                            <a asp-action="Index" class="btn wood-btn-outline">Quay lại danh sách</a>
+
+                            @if (User.IsInRole("admin"))
+                            {
+                                <div class="row g-2">
+                                    <div class="col-6">
+                                        <a asp-action="Edit" asp-route-id="@Model.Id" class="btn wood-btn-dark w-100">Chỉnh sửa</a>
+                                    </div>
+                                    <div class="col-6">
+                                        <a asp-action="Delete" asp-route-id="@Model.Id" class="btn btn-danger w-100 rounded-4 py-3">Xóa</a>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+
+                <div class="surface-card">
+                    <div class="surface-card-body">
+                        <h3 class="surface-section-title">Điểm nhấn giao diện</h3>
+                        <p class="surface-section-subtitle mb-3">
+                            Trang chi tiết được đồng bộ với tông gỗ của layout, home và danh sách sản phẩm.
+                        </p>
+
+                        <div class="wood-info-list">
+                            <div class="wood-info-item">
+                                <div class="wood-info-label">Trải nghiệm hình ảnh</div>
+                                <div class="wood-info-value">Ảnh lớn, thumbnail rõ ràng, không còn cảm giác bootstrap mặc định.</div>
+                            </div>
+                            <div class="wood-info-item">
+                                <div class="wood-info-label">CTA chính</div>
+                                <div class="wood-info-value">Nút mua, quay lại và nút admin cùng một hệ màu và bo góc.</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const mainImage = document.getElementById('productMainImage');
+            const thumbnails = document.querySelectorAll('.wood-gallery-thumb');
+
+            thumbnails.forEach(function (thumb) {
+                thumb.addEventListener('click', function () {
+                    const largeSrc = thumb.getAttribute('data-large-src');
+                    if (!largeSrc || !mainImage) return;
+
+                    mainImage.src = largeSrc;
+                    thumbnails.forEach(function (item) { item.classList.remove('active'); });
+                    thumb.classList.add('active');
+                });
+            });
+        });
+    </script>
+}

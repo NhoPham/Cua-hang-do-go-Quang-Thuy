@@ -1,0 +1,1064 @@
+@model IEnumerable<Product>
+@using System.Text.Json
+@using QLBH.Utils
+
+@{
+    ViewData["Title"] = "Danh sách sản phẩm";
+
+    var searchName = ViewBag.SearchName as string;
+    var selectedCategoryId = ViewBag.SelectedCategoryId;
+    var minPrice = ViewBag.MinPrice;
+    var maxPrice = ViewBag.MaxPrice;
+    var sortPrice = ViewBag.SortPrice as string;
+    var stockStatus = ViewBag.StockStatus as string;
+
+    var hasAdvancedFilter =
+        selectedCategoryId != null ||
+        minPrice != null ||
+        maxPrice != null ||
+        !string.IsNullOrWhiteSpace(sortPrice) ||
+        !string.IsNullOrWhiteSpace(stockStatus);
+
+    var filterCollapseClass = hasAdvancedFilter ? "collapse show" : "collapse";
+    var isAdmin = User.IsInRole("admin");
+    var productCount = Model?.Count() ?? 0;
+}
+
+<style>
+    .product-page {
+        --wood-dark: #2b2119;
+        --wood-brown: #6b4f3a;
+        --wood-gold: #c8a97e;
+        --wood-cream: #f6f1ea;
+        --wood-soft: #efe5d8;
+        --wood-border: #e2d5c5;
+    }
+
+    .product-hero {
+        background:
+            linear-gradient(135deg, rgba(43,33,25,.96), rgba(74,54,40,.88)),
+            radial-gradient(circle at top right, rgba(200,169,126,.22), transparent 35%);
+        border-radius: 28px;
+        color: #fff;
+        overflow: hidden;
+        position: relative;
+    }
+
+    .product-hero::after {
+        content: "";
+        position: absolute;
+        inset: auto -60px -60px auto;
+        width: 220px;
+        height: 220px;
+        background: rgba(255,255,255,.05);
+        border-radius: 50%;
+    }
+
+    .hero-kicker {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 14px;
+        border-radius: 999px;
+        background: rgba(255,255,255,.08);
+        color: #f5e7d3;
+        font-size: .9rem;
+        letter-spacing: .02em;
+    }
+
+    .hero-stats {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-top: 20px;
+    }
+
+    .hero-stat {
+        min-width: 150px;
+        background: rgba(255,255,255,.08);
+        border: 1px solid rgba(255,255,255,.08);
+        border-radius: 18px;
+        padding: 14px 16px;
+    }
+
+    .hero-stat-label {
+        color: rgba(255,255,255,.72);
+        font-size: .85rem;
+        margin-bottom: 4px;
+    }
+
+    .hero-stat-value {
+        font-weight: 700;
+        font-size: 1.05rem;
+    }
+
+    .product-search-card {
+        margin-top: -34px;
+        position: relative;
+        z-index: 3;
+    }
+
+    .product-search-shell {
+        background: #fff;
+        border: 1px solid var(--wood-border);
+        border-radius: 24px;
+        box-shadow: 0 16px 40px rgba(43,33,25,.08);
+    }
+
+    .product-search-input {
+        height: 58px;
+        border-radius: 999px;
+        border: 1px solid #e7ddd2;
+        background: #fbf8f4;
+        padding-inline: 22px;
+    }
+
+    .product-search-input:focus,
+    .product-filter-control:focus {
+        border-color: var(--wood-gold);
+        box-shadow: 0 0 0 .2rem rgba(200,169,126,.16);
+    }
+
+    .product-round-btn {
+        width: 58px;
+        height: 58px;
+        border-radius: 50%;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+
+    .btn-wood-dark {
+        background: var(--wood-dark);
+        color: #fff;
+        border: 1px solid var(--wood-dark);
+    }
+
+    .btn-wood-dark:hover {
+        background: #1f1812;
+        border-color: #1f1812;
+        color: #fff;
+    }
+
+    .btn-wood-outline {
+        background: #fff;
+        color: var(--wood-dark);
+        border: 1px solid #d8c7b3;
+    }
+
+    .btn-wood-outline:hover {
+        background: var(--wood-soft);
+        color: var(--wood-dark);
+        border-color: #d1bca5;
+    }
+
+    .btn-wood-primary {
+        background: var(--wood-gold);
+        color: #2b2119;
+        border: 1px solid var(--wood-gold);
+    }
+
+    .btn-wood-primary:hover {
+        background: #bb9868;
+        border-color: #bb9868;
+        color: #2b2119;
+    }
+
+    .product-filter-control {
+        border-radius: 14px;
+        border: 1px solid #e7ddd2;
+        background: #fff;
+        min-height: 46px;
+    }
+
+    .filter-chip {
+        background: #fff;
+        border: 1px solid var(--wood-border);
+        color: #4a3a2b;
+        border-radius: 999px;
+        padding: 8px 14px;
+        font-size: .92rem;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .product-card-customer {
+        border: 0;
+        border-radius: 24px;
+        overflow: hidden;
+        box-shadow: 0 12px 30px rgba(43,33,25,.08);
+        transition: transform .25s ease, box-shadow .25s ease;
+        background: #fff;
+    }
+
+    .product-card-customer:hover {
+        transform: translateY(-6px);
+        box-shadow: 0 18px 36px rgba(43,33,25,.14);
+    }
+
+    .product-card-image-wrap {
+        position: relative;
+        background: #f7f2ec;
+    }
+
+    .product-card-badge {
+        position: absolute;
+        left: 16px;
+        top: 16px;
+        background: rgba(255,255,255,.92);
+        color: #3a2e24;
+        border: 1px solid rgba(200,169,126,.35);
+        border-radius: 999px;
+        padding: 6px 12px;
+        font-size: .8rem;
+        font-weight: 600;
+    }
+
+    .stock-badge-in {
+        background: #edf8f1;
+        color: #1d6b3c;
+        border: 1px solid #bfe1cb;
+    }
+
+    .stock-badge-out {
+        background: #fff0f0;
+        color: #b23939;
+        border: 1px solid #f0c4c4;
+    }
+
+    .product-name {
+        font-size: 1.05rem;
+        font-weight: 700;
+        color: #2f241b;
+        margin-bottom: 8px;
+    }
+
+    .product-desc {
+        color: #7a6a5a;
+        min-height: 48px;
+        font-size: .95rem;
+    }
+
+    .product-price {
+        color: #7b5430;
+        font-size: 1.25rem;
+        font-weight: 800;
+    }
+
+    .admin-list-card {
+        border: 0;
+        border-radius: 26px;
+        overflow: hidden;
+        box-shadow: 0 14px 34px rgba(43,33,25,.08);
+        background: #fff;
+    }
+
+    .admin-list-head {
+        background: linear-gradient(135deg, #2b2119, #4a3a2b);
+        color: #fff;
+        padding: 20px 24px;
+    }
+
+    .admin-product-table thead th {
+        background: #f7f1e9;
+        color: #4a3a2b;
+        border-bottom: 1px solid #e5d7c6;
+        white-space: nowrap;
+    }
+
+    .admin-product-table td,
+    .admin-product-table th {
+        vertical-align: middle;
+        padding-top: 16px;
+        padding-bottom: 16px;
+    }
+
+    .admin-product-thumb {
+        width: 78px;
+        height: 78px;
+        object-fit: cover;
+        border-radius: 16px;
+        border: 1px solid #e9dccb;
+        background: #fff;
+    }
+
+    .table-product-name {
+        font-weight: 700;
+        color: #2f241b;
+    }
+
+    .table-product-desc {
+        color: #7a6a5a;
+        font-size: .92rem;
+        max-width: 300px;
+    }
+
+    .admin-price {
+        color: #8b5e34;
+        font-weight: 800;
+    }
+
+    .empty-state-card {
+        border: 0;
+        border-radius: 24px;
+        box-shadow: 0 10px 26px rgba(43,33,25,.08);
+        background: #fff;
+    }
+
+    .pagination .page-link {
+        color: #4a3a2b;
+        border-color: #e4d5c2;
+    }
+
+    .pagination .page-item.active .page-link {
+        background-color: var(--wood-dark);
+        border-color: var(--wood-dark);
+        color: #fff;
+    }
+
+    .admin-mobile-list {
+        display: none;
+    }
+
+    .admin-mobile-card {
+        border-top: 1px solid #eadfce;
+        padding: 18px;
+        background: #fff;
+    }
+
+    .admin-mobile-card:first-child {
+        border-top: 0;
+    }
+
+    .admin-mobile-top {
+        display: flex;
+        align-items: flex-start;
+        gap: 14px;
+    }
+
+    .admin-mobile-thumb {
+        width: 88px;
+        height: 88px;
+        object-fit: cover;
+        border-radius: 18px;
+        border: 1px solid #e9dccb;
+        background: #fff;
+        flex-shrink: 0;
+    }
+
+    .admin-mobile-name {
+        font-weight: 800;
+        color: #2f241b;
+        margin-bottom: 4px;
+        line-height: 1.4;
+    }
+
+    .admin-mobile-desc {
+        color: #7a6a5a;
+        font-size: .92rem;
+        line-height: 1.6;
+        margin-bottom: 0;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+
+    .admin-mobile-meta {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+        margin-top: 14px;
+    }
+
+    .admin-mobile-meta-item {
+        border: 1px solid #eadfce;
+        border-radius: 16px;
+        padding: 10px 12px;
+        background: #fcfaf7;
+    }
+
+    .admin-mobile-meta-label {
+        color: #8d7761;
+        font-size: .8rem;
+        margin-bottom: 4px;
+    }
+
+    .admin-mobile-meta-value {
+        color: #2f241b;
+        font-weight: 700;
+        line-height: 1.45;
+        word-break: break-word;
+    }
+
+    .admin-mobile-actions {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 8px;
+        margin-top: 14px;
+    }
+
+    .admin-mobile-actions .btn {
+        width: 100%;
+    }
+
+    @@media (max-width: 991.98px) {
+        .product-search-card {
+            margin-top: 20px;
+        }
+
+        .hero-stats {
+            margin-top: 16px;
+        }
+    }
+
+    @@media (max-width: 767.98px) {
+        .product-page {
+            overflow-x: hidden;
+        }
+
+        .product-hero {
+            border-radius: 22px;
+        }
+
+        .hero-stat {
+            min-width: 0;
+            flex: 1 1 calc(50% - 6px);
+        }
+
+        .product-search-shell {
+            border-radius: 20px;
+        }
+
+        .product-search-input {
+            height: 54px;
+        }
+
+        .product-round-btn {
+            width: 54px;
+            height: 54px;
+        }
+
+        .admin-list-head {
+            padding: 18px;
+        }
+
+        .admin-table-wrap {
+            display: none;
+        }
+
+        .admin-mobile-list {
+            display: block;
+        }
+    }
+
+    @@media (max-width: 575.98px) {
+        .product-hero {
+            border-radius: 18px;
+        }
+
+        .hero-kicker {
+            font-size: .82rem;
+            padding: 7px 12px;
+        }
+
+        .hero-stat {
+            flex-basis: 100%;
+        }
+
+        .product-search-shell {
+            padding: 14px !important;
+        }
+
+        .product-search-shell > .d-flex {
+            align-items: stretch !important;
+            gap: 10px !important;
+        }
+
+        .product-search-shell > .d-flex > .flex-grow-1 {
+            width: 100%;
+            flex: 0 0 100%;
+        }
+
+        .product-search-shell > .d-flex > .btn {
+            flex: 1 1 0;
+            width: auto;
+            border-radius: 18px;
+        }
+
+        .table-product-desc {
+            max-width: 100%;
+        }
+
+        .admin-mobile-top {
+            gap: 12px;
+        }
+
+        .admin-mobile-thumb {
+            width: 78px;
+            height: 78px;
+        }
+
+        .admin-mobile-meta {
+            grid-template-columns: 1fr;
+        }
+
+        .admin-mobile-actions {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+
+<div class="product-page">
+    <section class="product-hero p-4 p-lg-5 mb-4">
+        <div class="row align-items-center g-4">
+            <div class="col-lg-8">
+                <div class="hero-kicker mb-3">
+                    <span>•</span>
+                    <span>Bộ sưu tập nội thất gỗ</span>
+                </div>
+
+                <h1 class="display-6 fw-bold mb-3">Không gian nội thất tinh gọn, sang và ấm</h1>
+
+                <p class="mb-0 text-white-50" style="max-width: 760px;">
+                    @(isAdmin
+                        ? "Trang quản trị sản phẩm được tối ưu theo dạng danh sách để bạn xem nhanh tồn kho, giá bán và thao tác chỉnh sửa."
+                        : "Khám phá các mẫu bàn, ghế, tủ, giường và kệ với phong cách hiện đại, dễ chọn lọc và dễ mua sắm hơn.")
+                </p>
+
+                <div class="hero-stats">
+                    <div class="hero-stat">
+                        <div class="hero-stat-label">Sản phẩm hiển thị</div>
+                        <div class="hero-stat-value">@productCount sản phẩm</div>
+                    </div>
+
+                    <div class="hero-stat">
+                        <div class="hero-stat-label">Chế độ xem</div>
+                        <div class="hero-stat-value">@(isAdmin ? "Quản trị dạng danh sách" : "Khách hàng dạng thẻ")</div>
+                    </div>
+
+                    <div class="hero-stat">
+                        <div class="hero-stat-label">Bộ lọc hiện tại</div>
+                        <div class="hero-stat-value">@(hasAdvancedFilter ? "Đang áp dụng" : "Mặc định")</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-4">
+                <div class="bg-white bg-opacity-10 rounded-4 p-4 border border-white border-opacity-10">
+                    <div class="small text-uppercase text-white-50 mb-2">Gợi ý</div>
+                    <h5 class="fw-bold mb-3">Tìm nhanh theo nhu cầu</h5>
+                    <div class="d-flex flex-wrap gap-2">
+                        <span class="filter-chip bg-transparent text-white border border-white border-opacity-25">Bàn ăn</span>
+                        <span class="filter-chip bg-transparent text-white border border-white border-opacity-25">Giường ngủ</span>
+                        <span class="filter-chip bg-transparent text-white border border-white border-opacity-25">Tủ gỗ</span>
+                        <span class="filter-chip bg-transparent text-white border border-white border-opacity-25">Kệ trang trí</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="product-search-card mb-4">
+        <form method="get" class="product-search-shell p-3 p-md-4">
+            <div class="d-flex align-items-center gap-2 gap-md-3 flex-wrap flex-md-nowrap">
+                <div class="flex-grow-1">
+                    <input type="text"
+                           name="searchName"
+                           value="@searchName"
+                           class="form-control product-search-input"
+                           placeholder="Nhập tên sản phẩm cần tìm..." />
+                </div>
+
+                <button type="submit"
+                        class="btn btn-wood-dark product-round-btn"
+                        title="Tìm kiếm">
+                    <svg xmlns="http://www.w3.org/2000/svg"
+                         width="20"
+                         height="20"
+                         fill="currentColor"
+                         viewBox="0 0 16 16"
+                         aria-hidden="true">
+                        <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.867-3.834zm-5.242.656a5 5 0 1 1 0-10 5 5 0 0 1 0 10" />
+                    </svg>
+                </button>
+
+                <button type="button"
+                        class="btn @(hasAdvancedFilter ? "btn-wood-primary" : "btn-wood-outline") product-round-btn"
+                        data-bs-toggle="collapse"
+                        data-bs-target="#advancedFilters"
+                        aria-expanded="@(hasAdvancedFilter ? "true" : "false")"
+                        aria-controls="advancedFilters"
+                        title="Bộ lọc">
+                    <svg xmlns="http://www.w3.org/2000/svg"
+                         width="20"
+                         height="20"
+                         fill="currentColor"
+                         viewBox="0 0 16 16"
+                         aria-hidden="true">
+                        <path d="M1.5 1.5A.5.5 0 0 1 2 1h12a.5.5 0 0 1 .39.812L10 7.333V12.5a.5.5 0 0 1-.223.416l-2 1.333A.5.5 0 0 1 7 13.833V7.333L1.61 1.812A.5.5 0 0 1 1.5 1.5" />
+                    </svg>
+                </button>
+            </div>
+
+            <div id="advancedFilters" class="@filterCollapseClass">
+                <hr class="my-4" />
+
+                <div class="row g-3">
+                    <div class="col-lg-3 col-md-6">
+                        <label class="form-label fw-semibold">Danh mục</label>
+                        <select class="form-select product-filter-control" name="categoryId" asp-items="ViewBag.CategoryId">
+                            <option value="">Tất cả danh mục</option>
+                        </select>
+                    </div>
+
+                    <div class="col-lg-2 col-md-6">
+                        <label class="form-label fw-semibold">Giá từ</label>
+                        <input type="number"
+                               name="minPrice"
+                               value="@minPrice"
+                               class="form-control product-filter-control"
+                               min="0"
+                               step="1000"
+                               placeholder="0" />
+                    </div>
+
+                    <div class="col-lg-2 col-md-6">
+                        <label class="form-label fw-semibold">Đến giá</label>
+                        <input type="number"
+                               name="maxPrice"
+                               value="@maxPrice"
+                               class="form-control product-filter-control"
+                               min="0"
+                               step="1000"
+                               placeholder="1000000" />
+                    </div>
+
+                    <div class="col-lg-2 col-md-6">
+                        <label class="form-label fw-semibold">Sắp xếp giá</label>
+                        <select name="sortPrice" class="form-select product-filter-control">
+                            <option value="">Mặc định</option>
+                            <option value="price_asc" selected="@(sortPrice == "price_asc" ? "selected" : null)">Giá tăng dần</option>
+                            <option value="price_desc" selected="@(sortPrice == "price_desc" ? "selected" : null)">Giá giảm dần</option>
+                        </select>
+                    </div>
+
+                    <div class="col-lg-2 col-md-6">
+                        <label class="form-label fw-semibold">Tình trạng hàng</label>
+                        <select name="stockStatus" class="form-select product-filter-control">
+                            <option value="">Tất cả</option>
+                            <option value="in" selected="@(stockStatus == "in" ? "selected" : null)">Còn hàng</option>
+                            <option value="out" selected="@(stockStatus == "out" ? "selected" : null)">Hết hàng</option>
+                        </select>
+                    </div>
+
+                    <div class="col-lg-3 col-md-12">
+                        <label class="form-label fw-semibold d-none d-lg-block">&nbsp;</label>
+                        <div class="d-grid d-md-flex gap-2">
+                            <button class="btn btn-wood-primary rounded-3 flex-fill" type="submit">
+                                Áp dụng bộ lọc
+                            </button>
+                            <a asp-action="Index" class="btn btn-outline-secondary rounded-3 flex-fill">
+                                Đặt lại
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <div class="d-flex flex-wrap gap-2 mb-4">
+        @if (!string.IsNullOrWhiteSpace(searchName))
+        {
+            <span class="filter-chip">Tên: @searchName</span>
+        }
+
+        @if (selectedCategoryId != null)
+        {
+            <span class="filter-chip">Đã chọn danh mục</span>
+        }
+
+        @if (minPrice != null)
+        {
+            <span class="filter-chip">Từ giá: @string.Format("{0:N0}", minPrice) đ</span>
+        }
+
+        @if (maxPrice != null)
+        {
+            <span class="filter-chip">Đến giá: @string.Format("{0:N0}", maxPrice) đ</span>
+        }
+
+        @if (sortPrice == "price_asc")
+        {
+            <span class="filter-chip">Giá tăng dần</span>
+        }
+        else if (sortPrice == "price_desc")
+        {
+            <span class="filter-chip">Giá giảm dần</span>
+        }
+
+        @if (stockStatus == "in")
+        {
+            <span class="filter-chip stock-badge-in">Còn hàng</span>
+        }
+        else if (stockStatus == "out")
+        {
+            <span class="filter-chip stock-badge-out">Hết hàng</span>
+        }
+    </div>
+
+    @if (isAdmin)
+    {
+        <div class="admin-list-card">
+            <div class="admin-list-head d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+                <div>
+                    <h4 class="fw-bold mb-1">Quản lý sản phẩm</h4>
+                    <div class="text-white-50">Dễ theo dõi giá, tồn kho, trạng thái và thao tác nhanh.</div>
+                </div>
+
+                <div class="d-flex gap-2">
+                    <a asp-action="Create" class="btn btn-light rounded-3">Thêm sản phẩm</a>
+                </div>
+            </div>
+
+            <div class="card-body p-0">
+                <div class="admin-table-wrap">
+                    <div class="table-responsive">
+                        <table class="table admin-product-table table-hover align-middle mb-0">
+                            <thead>
+                                <tr>
+                                    <th class="ps-4">Ảnh</th>
+                                    <th>Tên sản phẩm</th>
+                                    <th>Danh mục</th>
+                                    <th>Giá</th>
+                                    <th>Tồn kho</th>
+                                    <th>Trạng thái</th>
+                                    <th class="text-end pe-4">Thao tác</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @if (Model.Any())
+                                {
+                                    foreach (var item in Model)
+                                    {
+                                        var imageList = ImageHelper.GetImageList(item.Images);
+                                        var firstImage = imageList.Any()
+                                            ? imageList.First()
+                                            : "/images/default/no-image.jpg";
+
+                                        <tr>
+                                            <td class="ps-4">
+                                                <img src="@firstImage"
+                                                     alt="@item.Name"
+                                                     class="admin-product-thumb" />
+                                            </td>
+
+                                            <td>
+                                                <div class="table-product-name">@item.Name</div>
+                                                <div class="table-product-desc text-truncate">
+                                                    @(string.IsNullOrWhiteSpace(item.Description) ? "Chưa có mô tả." : item.Description)
+                                                </div>
+                                            </td>
+
+                                            <td>@(item.Category?.Name ?? "Chưa có danh mục")</td>
+
+                                            <td class="admin-price">@item.Price.ToString("N0") đ</td>
+
+                                            <td>@item.Stock</td>
+
+                                            <td>
+                                                @if (item.Stock > 0)
+                                                {
+                                                    <span class="filter-chip stock-badge-in">Còn hàng</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="filter-chip stock-badge-out">Hết hàng</span>
+                                                }
+                                            </td>
+
+                                            <td class="text-end pe-4">
+                                                <div class="d-inline-flex flex-wrap gap-2 justify-content-end">
+                                                    <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-outline-dark rounded-3">
+                                                        Chi tiết
+                                                    </a>
+                                                    <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-warning rounded-3">
+                                                        Sửa
+                                                    </a>
+                                                    <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-sm btn-danger rounded-3">
+                                                        Xóa
+                                                    </a>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    }
+                                }
+                                else
+                                {
+                                    <tr>
+                                        <td colspan="7" class="text-center py-5 text-muted">
+                                            Không tìm thấy sản phẩm phù hợp.
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="admin-mobile-list">
+                    @if (Model.Any())
+                    {
+                        foreach (var item in Model)
+                        {
+                            var imageList = ImageHelper.GetImageList(item.Images);
+                            var firstImage = imageList.Any()
+                                ? imageList.First()
+                                : "/images/default/no-image.jpg";
+
+                            <div class="admin-mobile-card">
+                                <div class="admin-mobile-top">
+                                    <img src="@firstImage"
+                                         alt="@item.Name"
+                                         class="admin-mobile-thumb" />
+
+                                    <div class="flex-grow-1">
+                                        <div class="admin-mobile-name">@item.Name</div>
+                                        <p class="admin-mobile-desc">
+                                            @(string.IsNullOrWhiteSpace(item.Description) ? "Chưa có mô tả." : item.Description)
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div class="admin-mobile-meta">
+                                    <div class="admin-mobile-meta-item">
+                                        <div class="admin-mobile-meta-label">Danh mục</div>
+                                        <div class="admin-mobile-meta-value">@(item.Category?.Name ?? "Chưa có danh mục")</div>
+                                    </div>
+
+                                    <div class="admin-mobile-meta-item">
+                                        <div class="admin-mobile-meta-label">Giá</div>
+                                        <div class="admin-mobile-meta-value admin-price">@item.Price.ToString("N0") đ</div>
+                                    </div>
+
+                                    <div class="admin-mobile-meta-item">
+                                        <div class="admin-mobile-meta-label">Tồn kho</div>
+                                        <div class="admin-mobile-meta-value">@item.Stock</div>
+                                    </div>
+
+                                    <div class="admin-mobile-meta-item">
+                                        <div class="admin-mobile-meta-label">Trạng thái</div>
+                                        <div class="admin-mobile-meta-value">
+                                            @if (item.Stock > 0)
+                                            {
+                                                <span class="filter-chip stock-badge-in">Còn hàng</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="filter-chip stock-badge-out">Hết hàng</span>
+                                            }
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="admin-mobile-actions">
+                                    <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-outline-dark rounded-3">
+                                        Chi tiết
+                                    </a>
+                                    <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-warning rounded-3">
+                                        Sửa
+                                    </a>
+                                    <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-danger rounded-3">
+                                        Xóa
+                                    </a>
+                                </div>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <div class="admin-mobile-card text-center text-muted">
+                            Không tìm thấy sản phẩm phù hợp.
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="row g-4">
+            @foreach (var item in Model)
+            {
+                var imageList = ImageHelper.GetImageList(item.Images);
+
+                if (!imageList.Any())
+                {
+                    imageList = new List<string> { "/images/default/no-image.jpg" };
+                }
+
+                var firstImage = imageList.First();
+                var imagesJson = JsonSerializer.Serialize(imageList);
+
+                <div class="col-xl-3 col-lg-4 col-md-6">
+                    <div class="product-card-customer h-100">
+                        <div class="product-card-image-wrap">
+                            <img src="@firstImage"
+                                 alt="@item.Name"
+                                 class="card-img-top product-image"
+                                 data-images='@Html.Raw(imagesJson)'
+                                 style="height: 260px; object-fit: cover;" />
+
+                            <div class="product-card-badge">
+                                @(item.Category?.Name ?? "Nội thất")
+                            </div>
+                        </div>
+
+                        <div class="card-body d-flex flex-column p-4">
+                            <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
+                                <div class="product-name">@item.Name</div>
+
+                                @if (item.Stock > 0)
+                                {
+                                    <span class="filter-chip stock-badge-in">Còn hàng</span>
+                                }
+                                else
+                                {
+                                    <span class="filter-chip stock-badge-out">Hết hàng</span>
+                                }
+                            </div>
+
+                            <div class="product-desc mb-3">
+                                @(string.IsNullOrWhiteSpace(item.Description) ? "Chưa có mô tả cho sản phẩm này." : item.Description)
+                            </div>
+
+                            <div class="d-flex justify-content-between align-items-center mb-4">
+                                <div class="product-price">@item.Price.ToString("N0") đ</div>
+                                <div class="text-muted small">Kho: @item.Stock</div>
+                            </div>
+
+                            <div class="d-grid gap-2 mt-auto">
+                                <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-outline-dark rounded-3">
+                                    Xem chi tiết
+                                </a>
+
+                                @if (User.Identity?.IsAuthenticated == true)
+                                {
+                                    <form asp-controller="Cart" asp-action="Add" method="post" class="d-grid">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="productId" value="@item.Id" />
+                                        <input type="hidden" name="returnUrl" value="@($"{Context.Request.Path}{Context.Request.QueryString}")" />
+                                        <button class="btn btn-wood-primary rounded-3" type="submit" @(item.Stock <= 0 ? "disabled" : null)>
+                                            @(item.Stock > 0 ? "Thêm vào giỏ" : "Hết hàng")
+                                        </button>
+                                    </form>
+                                }
+                                else
+                                {
+                                    <a asp-controller="Account"
+                                       asp-action="Login"
+                                       asp-route-returnUrl="@($"{Context.Request.Path}{Context.Request.QueryString}")"
+                                       class="btn btn-wood-primary rounded-3">
+                                        Đăng nhập để mua
+                                    </a>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+
+    @if (!Model.Any())
+    {
+        <div class="empty-state-card mt-4">
+            <div class="card-body text-center py-5">
+                <h5 class="fw-bold mb-2">Không tìm thấy sản phẩm phù hợp</h5>
+                <p class="text-muted mb-3">Hãy thử đổi từ khóa, khoảng giá hoặc bộ lọc khác.</p>
+                <a asp-action="Index" class="btn btn-outline-secondary rounded-3">
+                    Xóa bộ lọc
+                </a>
+            </div>
+        </div>
+    }
+
+    @if (ViewBag.TotalPages > 1)
+    {
+        <nav class="mt-4">
+            <ul class="pagination justify-content-center">
+                @{
+                    var currentPage = (int)ViewBag.CurrentPage;
+                    var totalPages = (int)ViewBag.TotalPages;
+                }
+
+                <li class="page-item @(currentPage == 1 ? "disabled" : null)">
+                    <a class="page-link"
+                       asp-action="Index"
+                       asp-route-page="@(currentPage - 1)"
+                       asp-route-searchName="@searchName"
+                       asp-route-categoryId="@selectedCategoryId"
+                       asp-route-minPrice="@minPrice"
+                       asp-route-maxPrice="@maxPrice"
+                       asp-route-sortPrice="@sortPrice"
+                       asp-route-stockStatus="@stockStatus">«</a>
+                </li>
+
+                @for (var i = 1; i <= totalPages; i++)
+                {
+                    <li class="page-item @(i == currentPage ? "active" : null)">
+                        <a class="page-link"
+                           asp-action="Index"
+                           asp-route-page="@i"
+                           asp-route-searchName="@searchName"
+                           asp-route-categoryId="@selectedCategoryId"
+                           asp-route-minPrice="@minPrice"
+                           asp-route-maxPrice="@maxPrice"
+                           asp-route-sortPrice="@sortPrice"
+                           asp-route-stockStatus="@stockStatus">@i</a>
+                    </li>
+                }
+
+                <li class="page-item @(currentPage == totalPages ? "disabled" : null)">
+                    <a class="page-link"
+                       asp-action="Index"
+                       asp-route-page="@(currentPage + 1)"
+                       asp-route-searchName="@searchName"
+                       asp-route-categoryId="@selectedCategoryId"
+                       asp-route-minPrice="@minPrice"
+                       asp-route-maxPrice="@maxPrice"
+                       asp-route-sortPrice="@sortPrice"
+                       asp-route-stockStatus="@stockStatus">»</a>
+                </li>
+            </ul>
+        </nav>
+    }
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const productImages = document.querySelectorAll('.product-image');
+
+        productImages.forEach(function (img) {
+            let imageList = [];
+
+            try {
+                imageList = JSON.parse(img.dataset.images || '[]');
+            } catch (error) {
+                imageList = [];
+            }
+
+            if (!imageList || imageList.length <= 1) return;
+
+            let currentIndex = 0;
+
+            setInterval(function () {
+                currentIndex = (currentIndex + 1) % imageList.length;
+                img.src = imageList[currentIndex];
+            }, 3000);
+        });
+    });
+</script>

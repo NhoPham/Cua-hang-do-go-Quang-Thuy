@@ -1,0 +1,103 @@
+@model RegisterViewModel
+
+@{
+    ViewData["Title"] = "Đăng ký";
+}
+
+<div class="wood-page wood-auth-wrap">
+    <div class="row g-4 w-100 align-items-stretch">
+        <div class="col-lg-5">
+            <div class="surface-card-dark wood-auth-panel h-100 p-4 p-lg-5">
+                <div class="wood-page-kicker mb-3">
+                    <span>•</span>
+                    <span>Thành viên mới</span>
+                </div>
+
+                <h1 class="wood-page-title mb-3">Tạo tài khoản để mua sắm thuận tiện hơn</h1>
+                <p class="wood-page-subtitle mb-4">
+                    Đăng ký một lần để lưu giỏ hàng, đặt đơn nhanh và theo dõi toàn bộ hành trình mua sắm của bạn.
+                </p>
+
+                <div class="wood-auth-feature">
+                    <div class="wood-auth-icon">👤</div>
+                    <div>
+                        <div class="fw-bold">Quản lý tài khoản rõ ràng</div>
+                        <div class="text-white-50">Đăng nhập, đặt hàng và kiểm tra lịch sử mua dễ dàng hơn.</div>
+                    </div>
+                </div>
+
+                <div class="wood-auth-feature">
+                    <div class="wood-auth-icon">🧾</div>
+                    <div>
+                        <div class="fw-bold">Theo dõi đơn trực tiếp</div>
+                        <div class="text-white-50">Biết ngay đơn đang chờ xác nhận, giao hàng hay đã hoàn thành.</div>
+                    </div>
+                </div>
+
+                <div class="wood-auth-feature">
+                    <div class="wood-auth-icon">🔒</div>
+                    <div>
+                        <div class="fw-bold">Thông tin được lưu gọn gàng</div>
+                        <div class="text-white-50">Giúp các lần mua sau diễn ra nhanh và liền mạch hơn.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-7">
+            <div class="surface-card wood-auth-panel h-100">
+                <div class="surface-card-body-lg">
+                    <div class="mb-4">
+                        <h2 class="surface-section-title mb-2">Đăng ký tài khoản</h2>
+                        <p class="surface-section-subtitle">Điền thông tin bên dưới để bắt đầu sử dụng hệ thống.</p>
+                    </div>
+
+                    <form asp-action="Register" method="post">
+                        @Html.AntiForgeryToken()
+                        <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+                        <div class="mb-3">
+                            <label asp-for="Username" class="wood-label"></label>
+                            <input asp-for="Username" class="form-control wood-input" placeholder="Tên đăng nhập" />
+                            <span asp-validation-for="Username" class="text-danger small"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Email" class="wood-label"></label>
+                            <input asp-for="Email" class="form-control wood-input" placeholder="email@example.com" />
+                            <span asp-validation-for="Email" class="text-danger small"></span>
+                        </div>
+
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label asp-for="Password" class="wood-label"></label>
+                                <input asp-for="Password" class="form-control wood-input" placeholder="Tạo mật khẩu" />
+                                <span asp-validation-for="Password" class="text-danger small"></span>
+                            </div>
+                            <div class="col-md-6">
+                                <label asp-for="ConfirmPassword" class="wood-label"></label>
+                                <input asp-for="ConfirmPassword" class="form-control wood-input" placeholder="Nhập lại mật khẩu" />
+                                <span asp-validation-for="ConfirmPassword" class="text-danger small"></span>
+                            </div>
+                        </div>
+
+                        <div class="d-grid gap-3 mt-4">
+                            <button type="submit" class="btn wood-btn-primary">Đăng ký</button>
+                            <a asp-action="Login" class="btn wood-btn-outline">Tôi đã có tài khoản</a>
+                        </div>
+                    </form>
+
+                    <div class="mt-4 text-wood-muted small">
+                        Sau khi đăng ký, bạn có thể đăng nhập để lưu giỏ hàng và theo dõi đơn mua.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

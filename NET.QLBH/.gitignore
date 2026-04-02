@@ -1,0 +1,77 @@
+## Build Folders
+bin/
+obj/
+out/
+
+## User-specific files
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+## ASP.NET Scaffolding
+ScaffoldingReadMe.txt
+
+## Rider
+.idea/
+
+## Visual Studio Code
+.vscode/
+
+## Package Management
+packages/
+*.nupkg
+project.lock.json
+project.fragment.lock.json
+artifacts/
+
+# ASP.NET Core Secrets
+secrets.json
+
+# Dotnet CLI
+**/project.lock.json
+**/project.fragment.lock.json
+*.dotCover
+
+## Environment
+.env
+.env.*
+
+## Logs
+*.log
+logs/
+log/
+
+## Publish Output
+publish/
+*.Publish.xml
+
+## File storage
+wwwroot/uploads/
+wwwroot/images/products/
+
+## Resharper
+_ReSharper*/
+*.[Rr]e[Ss]harper
+*.DotSettings.user
+
+## Rider
+.idea/
+
+## Others
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+
+# Backup files
+*.bak
+*.old
+*.tmp
+
+# OS generated
+.DS_Store
+Thumbs.db
+
+# Optional: node_modules nếu bạn dùng frontend build tool (npm/yarn)
+node_modules/

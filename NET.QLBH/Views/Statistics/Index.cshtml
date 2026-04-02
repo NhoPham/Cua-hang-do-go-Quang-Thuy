@@ -1,0 +1,213 @@
+@model StatisticsDashboardViewModel
+
+@{
+    ViewData["Title"] = "Thống kê";
+}
+
+<div class="wood-page">
+    <section class="wood-page-hero mb-4">
+        <div class="row g-4 align-items-center position-relative" style="z-index:2;">
+            <div class="col-lg-8">
+                <div class="wood-page-kicker mb-3">
+                    <span>•</span>
+                    <span>Báo cáo bán hàng</span>
+                </div>
+                <h1 class="wood-page-title">Thống kê bán hàng</h1>
+                <p class="wood-page-subtitle">Theo dõi doanh thu, đơn hàng, sản phẩm bán chạy và cảnh báo tồn kho trong cùng một bảng điều khiển quản trị.</p>
+            </div>
+            <div class="col-lg-4">
+                <div class="wood-mini-stat-grid">
+                    <div class="wood-mini-stat">
+                        <div class="wood-mini-stat-label">Khoảng lọc</div>
+                        <div class="wood-mini-stat-value">@Model.From.ToString("dd/MM") - @Model.To.ToString("dd/MM")</div>
+                    </div>
+                    <div class="wood-mini-stat">
+                        <div class="wood-mini-stat-label">Tổng doanh thu</div>
+                        <div class="wood-mini-stat-value">@Model.TotalRevenue.ToString("N0") đ</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <form method="get" class="surface-card mb-4">
+        <div class="surface-card-body">
+            <div class="row g-3 align-items-end">
+                <div class="col-md-4">
+                    <label class="wood-label">Từ ngày</label>
+                    <input type="date" name="from" value="@Model.From.ToString("yyyy-MM-dd")" class="form-control wood-input" />
+                </div>
+                <div class="col-md-4">
+                    <label class="wood-label">Đến ngày</label>
+                    <input type="date" name="to" value="@Model.To.ToString("yyyy-MM-dd")" class="form-control wood-input" />
+                </div>
+                <div class="col-md-4 d-grid">
+                    <button class="btn wood-btn-primary">Lọc thống kê</button>
+                </div>
+            </div>
+        </div>
+    </form>
+
+    <div class="row g-4 mb-4">
+        <div class="col-md-6 col-xl-3">
+            <div class="wood-metric-card">
+                <div class="wood-metric-label">Tổng đơn hàng</div>
+                <div class="wood-metric-value">@Model.TotalOrders</div>
+            </div>
+        </div>
+        <div class="col-md-6 col-xl-3">
+            <div class="wood-metric-card">
+                <div class="wood-metric-label">Đơn chờ xác nhận</div>
+                <div class="wood-metric-value">@Model.PendingOrders</div>
+            </div>
+        </div>
+        <div class="col-md-6 col-xl-3">
+            <div class="wood-metric-card">
+                <div class="wood-metric-label">Đơn hoàn thành</div>
+                <div class="wood-metric-value">@Model.CompletedOrders</div>
+            </div>
+        </div>
+        <div class="col-md-6 col-xl-3">
+            <div class="wood-metric-card">
+                <div class="wood-metric-label">Doanh thu</div>
+                <div class="wood-metric-value wood-metric-value-accent">@Model.TotalRevenue.ToString("N0") đ</div>
+                <div class="text-wood-muted small mt-2">Đã bán @Model.TotalUnitsSold sản phẩm</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-6">
+            <div class="surface-card h-100">
+                <div class="surface-card-body-lg">
+                    <h2 class="surface-section-title mb-3">Top sản phẩm bán chạy</h2>
+
+                    <div class="wood-table-wrap table-responsive">
+                        <table class="table wood-table align-middle">
+                            <thead>
+                                <tr>
+                                    <th>Sản phẩm</th>
+                                    <th class="text-end">SL bán</th>
+                                    <th class="text-end">Doanh thu</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @if (Model.TopProducts.Any())
+                                {
+                                    @foreach (var item in Model.TopProducts)
+                                    {
+                                        <tr>
+                                            <td>@item.ProductName</td>
+                                            <td class="text-end">@item.QuantitySold</td>
+                                            <td class="text-end">@item.Revenue.ToString("N0") đ</td>
+                                        </tr>
+                                    }
+                                }
+                                else
+                                {
+                                    <tr>
+                                        <td colspan="3" class="text-center py-4 text-wood-muted">Chưa có dữ liệu.</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6">
+            <div class="surface-card h-100">
+                <div class="surface-card-body-lg">
+                    <h2 class="surface-section-title mb-3">Phân bố trạng thái đơn</h2>
+
+                    <div class="wood-table-wrap table-responsive mb-4">
+                        <table class="table wood-table align-middle">
+                            <thead>
+                                <tr>
+                                    <th>Trạng thái</th>
+                                    <th class="text-end">Số lượng</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @if (Model.StatusBreakdown.Any())
+                                {
+                                    @foreach (var item in Model.StatusBreakdown)
+                                    {
+                                        <tr>
+                                            <td>@OrderUiHelper.OrderStatusLabel(item.Status)</td>
+                                            <td class="text-end">@item.Count</td>
+                                        </tr>
+                                    }
+                                }
+                                else
+                                {
+                                    <tr>
+                                        <td colspan="2" class="text-center py-4 text-wood-muted">Chưa có dữ liệu.</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <h3 class="h5 fw-bold mb-3">Sản phẩm sắp hết hàng</h3>
+                    <div class="d-grid gap-2">
+                        @if (Model.LowStockProducts.Any())
+                        {
+                            @foreach (var item in Model.LowStockProducts)
+                            {
+                                <div class="wood-list-item d-flex justify-content-between align-items-center">
+                                    <span>@item.ProductName</span>
+                                    <span class="wood-status-chip danger">Còn @item.Stock</span>
+                                </div>
+                            }
+                        }
+                        else
+                        {
+                            <div class="text-wood-muted">Không có sản phẩm nào dưới ngưỡng cảnh báo.</div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12">
+            <div class="surface-card">
+                <div class="surface-card-body-lg">
+                    <h2 class="surface-section-title mb-3">Doanh thu theo ngày</h2>
+
+                    <div class="wood-table-wrap table-responsive">
+                        <table class="table wood-table align-middle">
+                            <thead>
+                                <tr>
+                                    <th>Ngày</th>
+                                    <th class="text-end">Số đơn</th>
+                                    <th class="text-end">Doanh thu</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @if (Model.RevenueByDay.Any())
+                                {
+                                    @foreach (var item in Model.RevenueByDay)
+                                    {
+                                        <tr>
+                                            <td>@item.Date.ToString("dd/MM/yyyy")</td>
+                                            <td class="text-end">@item.Orders</td>
+                                            <td class="text-end">@item.Revenue.ToString("N0") đ</td>
+                                        </tr>
+                                    }
+                                }
+                                else
+                                {
+                                    <tr>
+                                        <td colspan="3" class="text-center py-4 text-wood-muted">Chưa có dữ liệu doanh thu trong khoảng thời gian này.</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

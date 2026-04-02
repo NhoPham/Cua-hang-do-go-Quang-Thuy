@@ -1,0 +1,159 @@
+@model TrackOrderViewModel
+
+@{
+    ViewData["Title"] = "Theo dõi đơn hàng";
+}
+
+<div class="wood-page">
+    <section class="wood-page-hero mb-4">
+        <div class="row g-4 align-items-center position-relative" style="z-index:2;">
+            <div class="col-lg-8">
+                <div class="wood-page-kicker mb-3">
+                    <span>•</span>
+                    <span>Tra cứu trạng thái đơn</span>
+                </div>
+                <h1 class="wood-page-title">Theo dõi đơn hàng</h1>
+                <p class="wood-page-subtitle">Nhập mã đơn và email đặt hàng để kiểm tra tiến độ xử lý, thanh toán và thông tin nhận hàng.</p>
+            </div>
+            <div class="col-lg-4">
+                <div class="wood-mini-stat-grid">
+                    <div class="wood-mini-stat">
+                        <div class="wood-mini-stat-label">Tra cứu</div>
+                        <div class="wood-mini-stat-value">Mã đơn + email</div>
+                    </div>
+                    <div class="wood-mini-stat">
+                        <div class="wood-mini-stat-label">Kết quả</div>
+                        <div class="wood-mini-stat-value">Tức thì</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="surface-card mb-4">
+        <div class="surface-card-body-lg">
+            <form method="get" class="row g-3 align-items-end">
+                <div class="col-md-5">
+                    <label class="wood-label">Mã đơn</label>
+                    <input name="orderCode" value="@Model.OrderCode" class="form-control wood-input" placeholder="Ví dụ: DH202603..." />
+                </div>
+                <div class="col-md-5">
+                    <label class="wood-label">Email đặt hàng</label>
+                    <input name="email" value="@Model.Email" class="form-control wood-input" placeholder="Nhập email đã dùng khi đặt hàng" />
+                </div>
+                <div class="col-md-2 d-grid">
+                    <button class="btn wood-btn-primary">Tra cứu</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    @if (Model.HasSearched && Model.Order == null)
+    {
+        <div class="surface-card wood-empty">
+            <div class="wood-empty-title">Không tìm thấy đơn hàng phù hợp</div>
+            <p class="wood-empty-text">Hãy kiểm tra lại mã đơn và email đã dùng khi đặt hàng rồi thử lại.</p>
+        </div>
+    }
+
+    @if (Model.Order != null)
+    {
+        <div class="row g-4">
+            <div class="col-lg-8">
+                <div class="surface-card">
+                    <div class="surface-card-body-lg">
+                        <div class="d-flex flex-column flex-md-row justify-content-between gap-3 mb-3">
+                            <div>
+                                <h2 class="surface-section-title mb-2">Đơn hàng @Model.Order.OrderCode</h2>
+                                <div class="surface-section-subtitle">Tạo lúc @Model.Order.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</div>
+                            </div>
+                            <div class="d-flex flex-wrap gap-2">
+                                <span class="badge @OrderUiHelper.OrderStatusBadgeClass(Model.Order.OrderStatus)">
+                                    @OrderUiHelper.OrderStatusLabel(Model.Order.OrderStatus)
+                                </span>
+                                <span class="badge @OrderUiHelper.PaymentStatusBadgeClass(Model.Order.PaymentStatus)">
+                                    @OrderUiHelper.PaymentStatusLabel(Model.Order.PaymentStatus)
+                                </span>
+                            </div>
+                        </div>
+
+                        <div class="wood-table-wrap table-responsive">
+                            <table class="table wood-table align-middle">
+                                <thead>
+                                    <tr>
+                                        <th>Sản phẩm</th>
+                                        <th class="text-end">SL</th>
+                                        <th class="text-end">Đơn giá</th>
+                                        <th class="text-end">Thành tiền</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var item in Model.Order.Items)
+                                    {
+                                        <tr>
+                                            <td>@item.ProductName</td>
+                                            <td class="text-end">@item.Quantity</td>
+                                            <td class="text-end">@item.UnitPrice.ToString("N0") đ</td>
+                                            <td class="text-end fw-semibold">@item.Subtotal.ToString("N0") đ</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="text-end mt-3">
+                            <div class="text-wood-muted small">Tổng tiền</div>
+                            <div class="h4 fw-bold text-wood-brown mb-0">@Model.Order.TotalAmount.ToString("N0") đ</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-4">
+                <div class="wood-sidebar-sticky">
+                    <div class="surface-card-soft">
+                        <div class="surface-card-body-lg">
+                            <h3 class="surface-section-title">Thông tin nhận hàng</h3>
+
+                            <div class="wood-info-list mt-3">
+                                <div class="wood-info-item">
+                                    <div class="wood-info-label">Người nhận</div>
+                                    <div class="wood-info-value">@Model.Order.ReceiverName</div>
+                                </div>
+                                <div class="wood-info-item">
+                                    <div class="wood-info-label">Địa chỉ</div>
+                                    <div class="wood-info-value">@Model.Order.ShippingAddress</div>
+                                </div>
+                                <div class="wood-info-item">
+                                    <div class="wood-info-label">Email</div>
+                                    <div class="wood-info-value">@Model.Order.Email</div>
+                                </div>
+                                <div class="wood-info-item">
+                                    <div class="wood-info-label">Số điện thoại</div>
+                                    <div class="wood-info-value">@Model.Order.Phone</div>
+                                </div>
+                            </div>
+
+                            <div class="wood-divider"></div>
+
+                            <div class="wood-timeline">
+                                <div class="wood-timeline-item">
+                                    <div class="fw-semibold">Đơn đã được tạo</div>
+                                    <div class="text-wood-muted small">@Model.Order.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</div>
+                                </div>
+                                <div class="wood-timeline-item">
+                                    <div class="fw-semibold">Trạng thái hiện tại</div>
+                                    <div class="text-wood-muted small">@OrderUiHelper.OrderStatusLabel(Model.Order.OrderStatus)</div>
+                                </div>
+                                <div class="wood-timeline-item">
+                                    <div class="fw-semibold">Thanh toán</div>
+                                    <div class="text-wood-muted small">@OrderUiHelper.PaymentStatusLabel(Model.Order.PaymentStatus)</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>

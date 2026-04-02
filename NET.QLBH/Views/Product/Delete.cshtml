@@ -1,0 +1,310 @@
+﻿@model QLBH.Models.Product
+@using QLBH.Utils
+
+@{
+    ViewData["Title"] = "Xóa sản phẩm";
+    var imageList = ImageHelper.GetImageList(Model.Images);
+    var firstImage = imageList.FirstOrDefault() ?? "/images/default/no-image.jpg";
+}
+
+<style>
+    .product-delete-page {
+        --wood-950: #241913;
+        --wood-900: #2f2219;
+        --wood-800: #4c392b;
+        --wood-700: #6f533d;
+        --wood-500: #b89268;
+        --wood-200: #f6ede5;
+        --wood-100: #fbf7f2;
+        --wood-border: #e7d9ca;
+        --wood-text: #4f3d2f;
+        --wood-muted: #8f7b67;
+        --danger-soft: #fff2f1;
+        --danger-border: #f2c9c4;
+        --danger-text: #a33e34;
+    }
+
+    .product-delete-page .delete-hero {
+        border-radius: 30px;
+        padding: 1.8rem;
+        background: linear-gradient(135deg, rgba(36,25,19,.98), rgba(79,59,43,.92));
+        color: #fff;
+        box-shadow: 0 22px 54px rgba(36,25,19,.16);
+    }
+
+    .product-delete-page .delete-kicker {
+        display: inline-flex;
+        align-items: center;
+        gap: .45rem;
+        padding: .55rem .95rem;
+        border-radius: 999px;
+        background: rgba(255,255,255,.08);
+        border: 1px solid rgba(255,255,255,.08);
+        color: #f6e7d6;
+        font-weight: 600;
+        font-size: .92rem;
+    }
+
+    .product-delete-page .delete-title {
+        font-size: clamp(2rem, 4vw, 3rem);
+        line-height: 1.1;
+        font-weight: 800;
+        letter-spacing: -.03em;
+    }
+
+    .product-delete-page .delete-desc {
+        color: rgba(255,255,255,.76);
+        line-height: 1.8;
+        margin-bottom: 0;
+    }
+
+    .product-delete-page .warning-box,
+    .product-delete-page .delete-card,
+    .product-delete-page .info-card,
+    .product-delete-page .detail-card,
+    .product-delete-page .gallery-card {
+        border-radius: 26px;
+        border: 1px solid var(--wood-border);
+        background: #fff;
+        box-shadow: 0 14px 34px rgba(36,25,19,.07);
+    }
+
+    .product-delete-page .warning-box {
+        border-color: var(--danger-border);
+        background: linear-gradient(135deg, #fff, var(--danger-soft));
+        color: var(--danger-text);
+        padding: 1rem 1.2rem;
+        box-shadow: none;
+    }
+
+    .product-delete-page .delete-card {
+        overflow: hidden;
+    }
+
+    .product-delete-page .cover-wrap {
+        background: linear-gradient(135deg, var(--wood-100), #fff);
+        padding: 1.5rem;
+        height: 100%;
+    }
+
+    .product-delete-page .cover-wrap img {
+        width: 100%;
+        max-height: 360px;
+        object-fit: cover;
+        border-radius: 22px;
+        border: 1px solid var(--wood-border);
+        box-shadow: 0 12px 28px rgba(36,25,19,.10);
+    }
+
+    .product-delete-page .content-wrap {
+        padding: 1.8rem;
+    }
+
+    .product-delete-page .section-title,
+    .product-delete-page .metric-title,
+    .product-delete-page .detail-title {
+        color: var(--wood-text);
+    }
+
+    .product-delete-page .section-title {
+        font-weight: 800;
+        margin-bottom: .35rem;
+    }
+
+    .product-delete-page .section-text,
+    .product-delete-page .metric-text,
+    .product-delete-page .detail-text {
+        color: var(--wood-muted);
+        line-height: 1.75;
+    }
+
+    .product-delete-page .metric-grid,
+    .product-delete-page .detail-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 1rem;
+    }
+
+    .product-delete-page .info-card,
+    .product-delete-page .detail-card {
+        padding: 1rem;
+        background: linear-gradient(135deg, #fff, var(--wood-100));
+        height: 100%;
+    }
+
+    .product-delete-page .metric-title,
+    .product-delete-page .detail-title {
+        font-size: .9rem;
+        font-weight: 700;
+        margin-bottom: .4rem;
+    }
+
+    .product-delete-page .metric-value {
+        font-size: 1.1rem;
+        font-weight: 800;
+        color: var(--wood-900);
+    }
+
+    .product-delete-page .gallery-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+        gap: .9rem;
+    }
+
+    .product-delete-page .gallery-card {
+        overflow: hidden;
+    }
+
+    .product-delete-page .gallery-card img {
+        width: 100%;
+        height: 120px;
+        object-fit: cover;
+        display: block;
+    }
+
+    .product-delete-page .gallery-caption {
+        padding: .65rem .75rem;
+        font-size: .86rem;
+        color: var(--wood-muted);
+    }
+
+    .product-delete-page .action-row .btn {
+        min-width: 180px;
+        border-radius: 16px;
+        padding: .9rem 1.2rem;
+        font-weight: 700;
+    }
+
+    @@media (max-width: 767.98px) {
+        .product-delete-page .delete-hero,
+        .product-delete-page .content-wrap,
+        .product-delete-page .cover-wrap {
+            padding: 1.2rem;
+        }
+
+        .product-delete-page .metric-grid,
+        .product-delete-page .detail-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .product-delete-page .action-row .btn {
+            width: 100%;
+        }
+    }
+</style>
+
+<div class="product-delete-page py-4">
+    <section class="delete-hero mb-4">
+        <div class="row align-items-center g-4">
+            <div class="col-lg-8">
+                <div class="delete-kicker mb-3">
+                    <span>•</span>
+                    <span>Quản trị sản phẩm</span>
+                </div>
+                <h1 class="delete-title mb-3">Xóa sản phẩm</h1>
+                <p class="delete-desc">Kiểm tra lại toàn bộ thông tin trước khi xác nhận xóa để tránh mất dữ liệu hiển thị trên cửa hàng.</p>
+            </div>
+            <div class="col-lg-4 text-lg-end">
+                <a asp-action="Index" class="btn btn-outline-light rounded-4 px-4">Quay lại danh sách</a>
+            </div>
+        </div>
+    </section>
+
+    <div class="warning-box mb-4">
+        <div class="fw-bold mb-1">Bạn có chắc muốn xóa sản phẩm này không?</div>
+        <div class="small">Thao tác xóa là hành động nhạy cảm và có thể làm thay đổi dữ liệu đang hiển thị trong shop.</div>
+    </div>
+
+    <div class="delete-card">
+        <div class="row g-0 align-items-stretch">
+            <div class="col-lg-4">
+                <div class="cover-wrap">
+                    <img src="@firstImage" alt="@Model.Name" />
+                </div>
+            </div>
+            <div class="col-lg-8">
+                <div class="content-wrap">
+                    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-start gap-3 mb-4">
+                        <div>
+                            <h2 class="section-title h3 mb-1">@Model.Name</h2>
+                            <p class="section-text mb-0">Thông tin chi tiết của sản phẩm sắp bị xóa.</p>
+                        </div>
+                        <span class="badge rounded-pill text-bg-danger px-3 py-2">Xác nhận xóa</span>
+                    </div>
+
+                    <div class="metric-grid mb-4">
+                        <div class="info-card">
+                            <div class="metric-title">Tên sản phẩm</div>
+                            <div class="metric-value">@Model.Name</div>
+                        </div>
+                        <div class="info-card">
+                            <div class="metric-title">Giá bán</div>
+                            <div class="metric-value">@Model.Price.ToString("N0") đ</div>
+                        </div>
+                        <div class="info-card">
+                            <div class="metric-title">Tồn kho</div>
+                            <div class="metric-value">@Model.Stock</div>
+                        </div>
+                        <div class="info-card">
+                            <div class="metric-title">Danh mục</div>
+                            <div class="metric-value">
+                                @if (Model.Category != null)
+                                {
+                                    @if (!string.IsNullOrWhiteSpace(Model.Category.Name))
+                                    {
+                                        @Model.Category.Name
+                                    }
+                                    else
+                                    {
+                                        <span>ID: @Model.Category.Id</span>
+                                    }
+                                }
+                                else
+                                {
+                                    <span>Chưa có danh mục</span>
+                                }
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="detail-grid mb-4">
+                        <div class="detail-card">
+                            <div class="detail-title">Mô tả</div>
+                            <div class="detail-text">@(string.IsNullOrWhiteSpace(Model.Description) ? "Chưa có mô tả cho sản phẩm này." : Model.Description)</div>
+                        </div>
+                        <div class="detail-card">
+                            <div class="detail-title">Chuỗi ảnh</div>
+                            <div class="detail-text text-break">@(string.IsNullOrWhiteSpace(Model.Images) ? "Không có dữ liệu ảnh." : Model.Images)</div>
+                        </div>
+                    </div>
+
+                    @if (imageList.Any())
+                    {
+                        <div class="mb-4">
+                            <h5 class="section-title h6 mb-3">Bộ ảnh của sản phẩm</h5>
+                            <div class="gallery-grid">
+                                @for (var i = 0; i < imageList.Count; i++)
+                                {
+                                    <div class="gallery-card">
+                                        <img src="@imageList[i]" alt="Ảnh @(i + 1) của @Model.Name" />
+                                        <div class="gallery-caption">Ảnh @(i + 1)</div>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    }
+
+                    <form asp-action="Delete" method="post">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" asp-for="Id" />
+
+                        <div class="action-row d-flex flex-column flex-sm-row gap-2">
+                            <button type="submit" class="btn btn-danger">Xóa sản phẩm</button>
+                            <a asp-action="Index" class="btn btn-outline-secondary">Hủy</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

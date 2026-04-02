@@ -1,0 +1,81 @@
+@model IEnumerable<Order>
+
+@{
+    ViewData["Title"] = "Đơn của tôi";
+}
+
+<div class="wood-page">
+    <section class="wood-page-hero mb-4">
+        <div class="row g-4 align-items-center position-relative" style="z-index:2;">
+            <div class="col-lg-8">
+                <div class="wood-page-kicker mb-3">
+                    <span>•</span>
+                    <span>Lịch sử mua hàng</span>
+                </div>
+                <h1 class="wood-page-title">Đơn của tôi</h1>
+                <p class="wood-page-subtitle">Theo dõi lịch sử mua hàng, trạng thái xử lý và thanh toán trong cùng một giao diện đồng bộ với khu vực mua sắm.</p>
+            </div>
+            <div class="col-lg-4">
+                <div class="wood-mini-stat-grid">
+                    <div class="wood-mini-stat">
+                        <div class="wood-mini-stat-label">Tổng đơn</div>
+                        <div class="wood-mini-stat-value">@Model.Count()</div>
+                    </div>
+                    <div class="wood-mini-stat">
+                        <div class="wood-mini-stat-label">Mới nhất</div>
+                        <div class="wood-mini-stat-value">@(Model.Any() ? Model.OrderByDescending(x => x.CreatedAt).First().CreatedAt.ToLocalTime().ToString("dd/MM") : "--")</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    @if (!Model.Any())
+    {
+        <div class="surface-card wood-empty">
+            <div class="wood-empty-title">Bạn chưa có đơn hàng nào</div>
+            <p class="wood-empty-text">Bắt đầu mua sắm để hệ thống lưu lại lịch sử đơn và cho phép bạn theo dõi trạng thái xử lý.</p>
+            <a asp-controller="Product" asp-action="Index" class="btn wood-btn-primary">Bắt đầu mua sắm</a>
+        </div>
+    }
+    else
+    {
+        <div class="d-grid gap-3">
+            @foreach (var order in Model.OrderByDescending(x => x.CreatedAt))
+            {
+                <div class="wood-order-card">
+                    <div class="d-flex flex-column flex-lg-row justify-content-between gap-3">
+                        <div>
+                            <div class="text-wood-muted small mb-1">Mã đơn</div>
+                            <div class="h5 fw-bold mb-1">@order.OrderCode</div>
+                            <div class="text-wood-muted">Tạo lúc @order.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</div>
+                        </div>
+
+                        <div class="wood-order-meta">
+                            <span class="badge @OrderUiHelper.PaymentStatusBadgeClass(order.PaymentStatus)">
+                                @OrderUiHelper.PaymentStatusLabel(order.PaymentStatus)
+                            </span>
+                            <span class="badge @OrderUiHelper.OrderStatusBadgeClass(order.OrderStatus)">
+                                @OrderUiHelper.OrderStatusLabel(order.OrderStatus)
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="wood-divider"></div>
+
+                    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+                        <div>
+                            <div class="text-wood-muted small">Tổng tiền</div>
+                            <div class="h4 fw-bold text-wood-brown mb-0">@order.TotalAmount.ToString("N0") đ</div>
+                        </div>
+
+                        <div class="d-flex flex-wrap gap-2">
+                            <a asp-action="Details" asp-route-id="@order.Id" class="btn wood-btn-outline">Chi tiết</a>
+                            <a asp-action="Track" asp-route-orderCode="@order.OrderCode" asp-route-email="@order.Email" class="btn wood-btn-primary">Tra cứu nhanh</a>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>

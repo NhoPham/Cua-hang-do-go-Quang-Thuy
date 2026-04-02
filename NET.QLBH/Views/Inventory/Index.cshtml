@@ -1,0 +1,157 @@
+@model InventoryDashboardViewModel
+
+@{
+    ViewData["Title"] = "Quản lý kho";
+}
+
+<div class="wood-page">
+    <section class="wood-page-hero mb-4">
+        <div class="row g-4 align-items-center position-relative" style="z-index:2;">
+            <div class="col-lg-8">
+                <div class="wood-page-kicker mb-3">
+                    <span>•</span>
+                    <span>Kho & tồn hàng</span>
+                </div>
+                <h1 class="wood-page-title">Quản lý kho</h1>
+                <p class="wood-page-subtitle">Theo dõi tồn kho, lịch sử điều chỉnh và cảnh báo sắp hết hàng trong giao diện quản trị thống nhất.</p>
+            </div>
+            <div class="col-lg-4">
+                <div class="wood-mini-stat-grid">
+                    <div class="wood-mini-stat">
+                        <div class="wood-mini-stat-label">Sản phẩm</div>
+                        <div class="wood-mini-stat-value">@Model.Products.Count()</div>
+                    </div>
+                    <div class="wood-mini-stat">
+                        <div class="wood-mini-stat-label">Biến động gần đây</div>
+                        <div class="wood-mini-stat-value">@Model.RecentTransactions.Count()</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="row g-4">
+        <div class="col-lg-4">
+            <div class="surface-card mb-4">
+                <div class="surface-card-body-lg">
+                    <h2 class="surface-section-title mb-3">Điều chỉnh tồn kho</h2>
+
+                    <form asp-action="AdjustStock" method="post">
+                        @Html.AntiForgeryToken()
+
+                        <div class="mb-3">
+                            <label class="wood-label">Sản phẩm</label>
+                            <select class="form-select wood-select" name="ProductId" required>
+                                <option value="">Chọn sản phẩm</option>
+                                @foreach (var item in Model.Products.OrderBy(x => x.ProductName))
+                                {
+                                    <option value="@item.ProductId">@item.ProductName (tồn @item.Stock)</option>
+                                }
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="wood-label">Loại điều chỉnh</label>
+                            <select class="form-select wood-select" name="Type">
+                                <option value="IMPORT">Nhập kho</option>
+                                <option value="EXPORT">Xuất kho</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="wood-label">Số lượng</label>
+                            <input type="number" name="Quantity" min="1" class="form-control wood-input" required />
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="wood-label">Ghi chú</label>
+                            <textarea name="Note" class="form-control wood-textarea"></textarea>
+                        </div>
+
+                        <button class="btn wood-btn-primary w-100" type="submit">Lưu điều chỉnh</button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="surface-card-soft">
+                <div class="surface-card-body-lg">
+                    <h2 class="surface-section-title mb-3">Biến động kho gần đây</h2>
+
+                    <div class="d-grid gap-2">
+                        @if (Model.RecentTransactions.Any())
+                        {
+                            @foreach (var tx in Model.RecentTransactions)
+                            {
+                                <div class="wood-list-item">
+                                    <div class="fw-semibold">@tx.Product.Name</div>
+                                    <div class="small text-wood-muted mb-1">@tx.Type - @tx.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</div>
+                                    <div>Biến động: <strong>@tx.QuantityChanged</strong></div>
+                                    <div>Tồn sau điều chỉnh: <strong>@tx.QuantityAfter</strong></div>
+
+                                    @if (!string.IsNullOrWhiteSpace(tx.ReferenceCode))
+                                    {
+                                        <div class="small text-wood-muted mt-1">Mã tham chiếu: @tx.ReferenceCode</div>
+                                    }
+                                </div>
+                            }
+                        }
+                        else
+                        {
+                            <div class="text-wood-muted">Chưa có lịch sử điều chỉnh gần đây.</div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-8">
+            <div class="surface-card">
+                <div class="surface-card-body p-0">
+                    <div class="wood-table-wrap table-responsive">
+                        <table class="table wood-table align-middle mb-0">
+                            <thead>
+                                <tr>
+                                    <th class="ps-4">Sản phẩm</th>
+                                    <th class="text-end">Giá</th>
+                                    <th class="text-center">Đã bán</th>
+                                    <th class="text-center">Tồn kho</th>
+                                    <th class="text-center pe-4">Cảnh báo</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @if (Model.Products.Any())
+                                {
+                                    @foreach (var item in Model.Products)
+                                    {
+                                        <tr>
+                                            <td class="ps-4 fw-semibold">@item.ProductName</td>
+                                            <td class="text-end">@item.Price.ToString("N0") đ</td>
+                                            <td class="text-center">@item.SoldQuantity</td>
+                                            <td class="text-center">@item.Stock</td>
+                                            <td class="text-center pe-4">
+                                                @if (item.IsLowStock)
+                                                {
+                                                    <span class="wood-status-chip danger">Sắp hết hàng</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="wood-status-chip success">Ổn định</span>
+                                                }
+                                            </td>
+                                        </tr>
+                                    }
+                                }
+                                else
+                                {
+                                    <tr>
+                                        <td colspan="5" class="text-center py-5 text-wood-muted">Chưa có dữ liệu sản phẩm trong kho.</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

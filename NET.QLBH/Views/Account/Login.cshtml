@@ -1,0 +1,109 @@
+@model LoginViewModel
+
+@{
+    ViewData["Title"] = "Đăng nhập";
+    var returnUrl = ViewData["ReturnUrl"]?.ToString();
+}
+
+<div class="wood-page wood-auth-wrap">
+    <div class="row g-4 w-100 align-items-stretch">
+        <div class="col-lg-6">
+            <div class="surface-card-dark wood-auth-panel h-100 p-4 p-lg-5">
+                <div class="wood-page-kicker mb-3">
+                    <span>•</span>
+                    <span>Tài khoản khách hàng</span>
+                </div>
+
+                <h1 class="wood-page-title mb-3">Đăng nhập để tiếp tục mua sắm</h1>
+                <p class="wood-page-subtitle mb-4">
+                    Truy cập giỏ hàng, theo dõi đơn, lưu lịch sử mua sắm và thao tác nhanh hơn trên hệ thống.
+                </p>
+
+                <div class="wood-mini-stat-grid mb-4">
+                    <div class="wood-mini-stat">
+                        <div class="wood-mini-stat-label">Tiện ích</div>
+                        <div class="wood-mini-stat-value">Giỏ hàng & đặt hàng</div>
+                    </div>
+                    <div class="wood-mini-stat">
+                        <div class="wood-mini-stat-label">Theo dõi</div>
+                        <div class="wood-mini-stat-value">Tra cứu đơn nhanh</div>
+                    </div>
+                </div>
+
+                <div class="wood-auth-feature">
+                    <div class="wood-auth-icon">🛒</div>
+                    <div>
+                        <div class="fw-bold">Giỏ hàng được lưu ổn định</div>
+                        <div class="text-white-50">Không bị mất khi bạn chuyển trang hay quay lại sau.</div>
+                    </div>
+                </div>
+
+                <div class="wood-auth-feature">
+                    <div class="wood-auth-icon">📦</div>
+                    <div>
+                        <div class="fw-bold">Xem đơn hàng dễ hơn</div>
+                        <div class="text-white-50">Kiểm tra trạng thái xử lý và thanh toán ngay trên tài khoản.</div>
+                    </div>
+                </div>
+
+                <div class="wood-auth-feature">
+                    <div class="wood-auth-icon">✨</div>
+                    <div>
+                        <div class="fw-bold">Trải nghiệm đồng bộ</div>
+                        <div class="text-white-50">Cùng tông giao diện với toàn bộ khu vực mua sắm và quản trị.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6">
+            <div class="surface-card wood-auth-panel h-100">
+                <div class="surface-card-body-lg">
+                    <div class="mb-4">
+                        <h2 class="surface-section-title mb-2">Đăng nhập</h2>
+                        <p class="surface-section-subtitle">Nhập tài khoản để tiếp tục sử dụng giỏ hàng, đặt hàng và theo dõi đơn.</p>
+                    </div>
+
+                    <form asp-action="Login" method="post">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="returnUrl" value="@returnUrl" />
+                        <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+                        <div class="mb-3">
+                            <label asp-for="UsernameOrEmail" class="wood-label"></label>
+                            <input asp-for="UsernameOrEmail" class="form-control wood-input" placeholder="Nhập username hoặc email" />
+                            <span asp-validation-for="UsernameOrEmail" class="text-danger small"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Password" class="wood-label"></label>
+                            <input asp-for="Password" class="form-control wood-input" placeholder="Nhập mật khẩu" />
+                            <span asp-validation-for="Password" class="text-danger small"></span>
+                        </div>
+
+                        <div class="form-check mb-4">
+                            <input asp-for="RememberMe" class="form-check-input" />
+                            <label asp-for="RememberMe" class="form-check-label text-wood-muted"></label>
+                        </div>
+
+                        <div class="d-grid gap-3">
+                            <button type="submit" class="btn wood-btn-primary">Đăng nhập</button>
+                            <a asp-controller="Product" asp-action="Index" class="btn wood-btn-outline">Xem sản phẩm trước</a>
+                        </div>
+                    </form>
+
+                    <div class="d-flex flex-column flex-sm-row justify-content-between gap-2 mt-4 small">
+                        <a asp-action="ForgotPassword" class="text-decoration-none">Quên mật khẩu?</a>
+                        <a asp-action="Register" class="text-decoration-none">Chưa có tài khoản? Đăng ký</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

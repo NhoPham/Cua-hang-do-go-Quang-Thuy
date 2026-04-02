@@ -1,0 +1,577 @@
+@using Microsoft.EntityFrameworkCore
+@using QLBH.Utils
+@inject QLBH.Models.QlbhContext DbContext
+
+@{
+    var cartCount = 0;
+
+    if (User.Identity?.IsAuthenticated == true)
+    {
+        var userId = User.GetUserId();
+        if (userId.HasValue)
+        {
+            cartCount = await DbContext.CartItems
+                .Where(x => x.UserId == userId.Value)
+                .SumAsync(x => (int?)x.Quantity) ?? 0;
+        }
+    }
+
+    var currentController = ViewContext.RouteData.Values["controller"]?.ToString();
+    var currentAction = ViewContext.RouteData.Values["action"]?.ToString();
+}
+
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Đồ Gỗ Quảng Thủy</title>
+
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+
+    <style>
+        :root {
+            --wood-950: #221811;
+            --wood-900: #2c2017;
+            --wood-800: #4a3527;
+            --wood-700: #6a4d39;
+            --wood-500: #b99269;
+            --wood-300: #e6d5c3;
+            --wood-200: #f3ebe2;
+            --wood-100: #faf6f1;
+            --wood-border: #e7d8c7;
+            --wood-text: #493629;
+            --wood-muted: #8d7761;
+            --container-max: 1360px;
+        }
+
+        html, body {
+            background: #f7f3ee;
+        }
+
+        .site-shell {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .site-topbar {
+            background: linear-gradient(90deg, var(--wood-950), var(--wood-800), var(--wood-950));
+            color: rgba(255,255,255,.92);
+            font-size: .92rem;
+        }
+
+        .site-topbar-inner {
+            max-width: var(--container-max);
+            margin: 0 auto;
+            padding: .55rem 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .site-navbar {
+            background: linear-gradient(135deg, rgba(44,32,23,.98), rgba(76,55,41,.96));
+            border-bottom: 1px solid rgba(255,255,255,.06);
+            box-shadow: 0 12px 28px rgba(34,24,17,.08);
+            position: sticky;
+            top: 0;
+            z-index: 1030;
+        }
+
+        .site-navbar .navbar-inner {
+            max-width: var(--container-max);
+            margin: 0 auto;
+            padding: .85rem 1rem;
+        }
+
+        @* CHANGED: brand gọn lại để navbar nằm 1 hàng *@
+        .brand-wrap {
+            display: flex;
+            align-items: center;
+            gap: .75rem;
+            text-decoration: none;
+            min-width: 0;
+            max-width: 290px;
+            flex: 0 0 auto;
+        }
+
+        .brand-mark {
+            width: 44px;
+            height: 44px;
+            border-radius: 14px;
+            background: linear-gradient(135deg, #e0bf97, #b98e61);
+            color: var(--wood-950);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 1.05rem;
+            flex-shrink: 0;
+        }
+
+        .brand-copy {
+            min-width: 0;
+        }
+
+        .brand-title {
+            color: #fff;
+            font-weight: 800;
+            font-size: 1.02rem;
+            line-height: 1.1;
+            margin: 0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        @* CHANGED: ẩn subtitle để header thấp và gọn hơn *@
+        .brand-subtitle {
+            display: none;
+        }
+
+        .site-toggler {
+            border: 1px solid rgba(255,255,255,.16);
+            border-radius: 14px;
+            padding: .55rem .8rem;
+            box-shadow: none !important;
+        }
+
+        .site-toggler .navbar-toggler-icon {
+            filter: brightness(0) invert(1);
+        }
+
+        @* CHANGED: navbar desktop 1 hàng *@
+        .site-nav {
+            align-items: center;
+            gap: .1rem;
+            flex-wrap: nowrap;
+        }
+
+        .site-nav .nav-link {
+            color: rgba(255,255,255,.92) !important;
+            font-weight: 700;
+            padding: .62rem .72rem !important;
+            border-radius: 12px;
+            white-space: nowrap;
+            line-height: 1.1;
+            font-size: .98rem;
+        }
+
+        .site-nav .nav-link:hover,
+        .site-nav .nav-link.active-link {
+            color: #fff !important;
+            background: rgba(255,255,255,.08);
+        }
+
+        .site-nav .dropdown-menu {
+            border: 1px solid var(--wood-border);
+            border-radius: 18px;
+            padding: .6rem;
+            box-shadow: 0 18px 40px rgba(34,24,17,.12);
+        }
+
+        .site-nav .dropdown-item {
+            border-radius: 12px;
+            padding: .7rem .85rem;
+            font-weight: 600;
+            color: var(--wood-text);
+        }
+
+        .site-nav .dropdown-item:hover {
+            background: var(--wood-100);
+            color: var(--wood-text);
+        }
+
+        @* CHANGED: cụm action gọn hơn để đủ 1 hàng *@
+        .site-actions {
+            display: flex;
+            align-items: center;
+            gap: .7rem;
+            flex-wrap: nowrap;
+            flex-shrink: 0;
+        }
+
+        .cart-btn {
+            position: relative;
+            width: 46px;
+            height: 46px;
+            border-radius: 16px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid rgba(255,255,255,.16);
+            background: rgba(255,255,255,.04);
+            color: #fff;
+            text-decoration: none;
+            flex-shrink: 0;
+        }
+
+        .cart-btn:hover {
+            background: rgba(255,255,255,.08);
+            color: #fff;
+        }
+
+        .cart-badge {
+            position: absolute;
+            top: -6px;
+            right: -6px;
+            min-width: 22px;
+            height: 22px;
+            padding: 0 6px;
+            border-radius: 999px;
+            background: #f0c999;
+            color: var(--wood-950);
+            font-size: .76rem;
+            font-weight: 800;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid var(--wood-900);
+        }
+
+        .hello-chip {
+            color: #fff;
+            font-weight: 700;
+            padding: .72rem .95rem;
+            border-radius: 14px;
+            background: rgba(255,255,255,.06);
+            white-space: nowrap;
+            line-height: 1.1;
+        }
+
+        .btn-auth,
+        .btn-logout {
+            border-radius: 14px;
+            padding: .72rem .95rem;
+            font-weight: 700;
+            white-space: nowrap;
+            line-height: 1.1;
+        }
+
+        .btn-auth {
+            background: #fff;
+            color: var(--wood-950);
+            border: 1px solid #fff;
+            text-decoration: none;
+        }
+
+        .btn-auth:hover {
+            background: #f4ede6;
+            color: var(--wood-950);
+        }
+
+        .btn-auth-outline {
+            background: transparent;
+            color: #fff;
+            border: 1px solid rgba(255,255,255,.24);
+            text-decoration: none;
+        }
+
+        .btn-auth-outline:hover {
+            background: rgba(255,255,255,.08);
+            color: #fff;
+        }
+
+        .btn-logout {
+            background: transparent;
+            color: #fff;
+            border: 1px solid rgba(255,255,255,.22);
+        }
+
+        .btn-logout:hover {
+            background: rgba(255,255,255,.08);
+            color: #fff;
+        }
+
+        .main-content {
+            flex: 1;
+        }
+
+        .container-fluid.page-wrap {
+            max-width: var(--container-max);
+            width: 100%;
+            margin: 0 auto;
+            padding: 1.5rem 1rem 2.5rem;
+        }
+
+        .site-alert {
+            border: 0;
+            border-radius: 18px;
+            box-shadow: 0 10px 24px rgba(34,24,17,.08);
+        }
+
+        .site-footer {
+            background: linear-gradient(135deg, #221811, #3d2c20);
+            color: rgba(255,255,255,.85);
+            margin-top: auto;
+        }
+
+        .site-footer-inner {
+            max-width: var(--container-max);
+            margin: 0 auto;
+            padding: 2.4rem 1rem 1.2rem;
+        }
+
+        .footer-title {
+            color: #fff;
+            font-weight: 800;
+            margin-bottom: .75rem;
+        }
+
+        .footer-text {
+            color: rgba(255,255,255,.72);
+            line-height: 1.8;
+        }
+
+        .footer-link {
+            color: rgba(255,255,255,.84);
+            text-decoration: none;
+            display: inline-block;
+            margin-bottom: .45rem;
+        }
+
+        .footer-link:hover {
+            color: #fff;
+        }
+
+        .footer-bottom {
+            border-top: 1px solid rgba(255,255,255,.08);
+            margin-top: 1.5rem;
+            padding-top: 1rem;
+            color: rgba(255,255,255,.62);
+            font-size: .95rem;
+        }
+
+        @* CHANGED: từ dưới 1400 thì collapse để tránh vỡ hàng *@
+        @@media (max-width: 1399.98px) {
+            .brand-wrap {
+                max-width: none;
+            }
+        }
+
+        @@media (max-width: 991.98px) {
+            .site-topbar-inner {
+                font-size: .84rem;
+                padding: .5rem .85rem;
+            }
+
+            .container-fluid.page-wrap {
+                padding: 1rem .85rem 2rem;
+            }
+
+            .brand-title {
+                font-size: 1rem;
+            }
+
+            .site-actions {
+                margin-top: 1rem;
+                width: 100%;
+                justify-content: flex-start;
+                flex-wrap: wrap;
+            }
+
+            .site-nav .nav-link {
+                padding: .85rem 1rem !important;
+            }
+        }
+
+        @@media (max-width: 575.98px) {
+            .site-topbar-inner {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: .2rem;
+            }
+
+            .brand-mark {
+                width: 42px;
+                height: 42px;
+                border-radius: 14px;
+            }
+
+            .brand-title {
+                font-size: .96rem;
+            }
+
+            .cart-btn {
+                width: 44px;
+                height: 44px;
+                border-radius: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="site-shell">
+        <div class="site-topbar">
+            <div class="site-topbar-inner">
+                <div>Nội thất gỗ tinh gọn • Thẩm mỹ • Bền vững</div>
+                <div>Đồ Gỗ Quảng Thủy</div>
+            </div>
+        </div>
+
+        <header class="site-navbar">
+            @* CHANGED: dùng navbar-expand-xxl để desktop lớn hiện 1 hàng, nhỏ hơn thì collapse *@
+            <nav class="navbar navbar-expand-xxl navbar-dark p-0">
+                <div class="navbar-inner w-100">
+                    <div class="d-flex align-items-center justify-content-between gap-3 w-100">
+                        <a asp-controller="Home" asp-action="Index" class="brand-wrap">
+                            <span class="brand-mark">QT</span>
+                            <span class="brand-copy">
+                                <div class="brand-title">Đồ Gỗ Quảng Thủy</div>
+                                <p class="brand-subtitle">Nội thất gỗ cho không gian sống hiện đại</p>
+                            </span>
+                        </a>
+
+                        <button class="navbar-toggler site-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavbar" aria-controls="mainNavbar" aria-expanded="false" aria-label="Mở menu">
+                            <span class="navbar-toggler-icon"></span>
+                        </button>
+                    </div>
+
+                    <div class="collapse navbar-collapse mt-3 mt-xxl-0" id="mainNavbar">
+                        <div class="site-nav navbar-nav ms-xxl-4 align-items-xxl-center">
+                            <a class="nav-link @(currentController == "Home" ? "active-link" : "")"
+                               asp-controller="Home" asp-action="Index">Trang chủ</a>
+
+                            <a class="nav-link @(currentController == "Product" ? "active-link" : "")"
+                               asp-controller="Product" asp-action="Index">Sản phẩm</a>
+
+                            <a class="nav-link @(currentController == "Order" && currentAction == "Track" ? "active-link" : "")"
+                               asp-controller="Order" asp-action="Track">Theo dõi đơn</a>
+
+                            @if (User.Identity?.IsAuthenticated == true)
+                            {
+                                <a class="nav-link @(currentController == "Order" && currentAction == "Index" ? "active-link" : "")"
+                                   asp-controller="Order" asp-action="Index">Đơn của tôi</a>
+                            }
+
+                            @if (User.IsInRole("admin"))
+                            {
+                                <div class="nav-item dropdown">
+                                    <a class="nav-link dropdown-toggle @(currentController == "Admin" || currentController == "Inventory" || currentController == "Statistics" || (currentController == "Order" && currentAction == "Admin") ? "active-link" : "")"
+                                       href="#"
+                                       role="button"
+                                       data-bs-toggle="dropdown"
+                                       aria-expanded="false">
+                                        Quản trị
+                                    </a>
+                                    <ul class="dropdown-menu">
+                                        <li><a class="dropdown-item" asp-controller="Order" asp-action="Admin">Quản lý đơn</a></li>
+                                        <li><a class="dropdown-item" asp-controller="Inventory" asp-action="Index">Kho</a></li>
+                                        <li><a class="dropdown-item" asp-controller="Statistics" asp-action="Index">Thống kê</a></li>
+                                        <li><a class="dropdown-item" asp-controller="Admin" asp-action="Customers">Khách hàng</a></li>
+                                        <li><a class="dropdown-item" asp-controller="Product" asp-action="Create">Thêm sản phẩm</a></li>
+                                    </ul>
+                                </div>
+                            }
+                        </div>
+
+                        <div class="site-actions ms-xxl-auto">
+                            @if (User.Identity?.IsAuthenticated == true)
+                            {
+                                <a asp-controller="Cart" asp-action="Index" class="cart-btn" title="Giỏ hàng">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
+                                        <path d="M0 1.5A.5.5 0 0 1 .5 1H2a.5.5 0 0 1 .49.402L2.89 3H14.5a.5.5 0 0 1 .49.598l-1.5 7A.5.5 0 0 1 13 11H4a.5.5 0 0 1-.49-.402L1.61 2H.5A.5.5 0 0 1 0 1.5M3.102 4l1.313 6h8.18l1.286-6zM5 12a2 2 0 1 0 0 4 2 2 0 0 0 0-4m7 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4m-7 1a1 1 0 1 1 0 2 1 1 0 0 1 0-2m7 0a1 1 0 1 1 0 2 1 1 0 0 1 0-2" />
+                                    </svg>
+                                    @if (cartCount > 0)
+                                    {
+                                        <span class="cart-badge">@cartCount</span>
+                                    }
+                                </a>
+
+                                <div class="hello-chip">Xin chào, @User.Identity.Name</div>
+
+                                <form asp-controller="Account" asp-action="Logout" method="post" class="m-0">
+                                    @Html.AntiForgeryToken()
+                                    <button type="submit" class="btn btn-logout">Đăng xuất</button>
+                                </form>
+                            }
+                            else
+                            {
+                                <a asp-controller="Account" asp-action="Login" class="btn btn-auth-outline">Đăng nhập</a>
+                                <a asp-controller="Account" asp-action="Register" class="btn btn-auth">Đăng ký</a>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </nav>
+        </header>
+
+        <main class="main-content">
+            <div class="container-fluid page-wrap">
+                @if (TempData["SuccessMessage"] != null)
+                {
+                    <div class="alert alert-success alert-dismissible fade show site-alert" role="alert">
+                        @TempData["SuccessMessage"]
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                }
+
+                @if (TempData["ErrorMessage"] != null)
+                {
+                    <div class="alert alert-danger alert-dismissible fade show site-alert" role="alert">
+                        @TempData["ErrorMessage"]
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                }
+
+                @if (TempData["InfoMessage"] != null)
+                {
+                    <div class="alert alert-info alert-dismissible fade show site-alert" role="alert">
+                        @TempData["InfoMessage"]
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                }
+
+                @RenderBody()
+            </div>
+        </main>
+
+        <footer class="site-footer">
+            <div class="site-footer-inner">
+                <div class="row g-4">
+                    <div class="col-lg-5">
+                        <h5 class="footer-title">Đồ Gỗ Quảng Thủy</h5>
+                        <div class="footer-text">
+                            Chuyên cung cấp các sản phẩm nội thất gỗ theo định hướng hiện đại, bền đẹp và phù hợp nhiều không gian sống.
+                            Tập trung vào trải nghiệm chọn sản phẩm dễ dàng, rõ ràng và thuận tiện hơn.
+                        </div>
+                    </div>
+
+                    <div class="col-sm-6 col-lg-3">
+                        <h6 class="footer-title">Điều hướng</h6>
+                        <a asp-controller="Home" asp-action="Index" class="footer-link">Trang chủ</a><br />
+                        <a asp-controller="Product" asp-action="Index" class="footer-link">Sản phẩm</a><br />
+                        <a asp-controller="Order" asp-action="Track" class="footer-link">Theo dõi đơn</a>
+                    </div>
+
+                    <div class="col-sm-6 col-lg-2">
+                        <h6 class="footer-title">Khách hàng</h6>
+                        <a asp-controller="Cart" asp-action="Index" class="footer-link">Giỏ hàng</a><br />
+                        <a asp-controller="Order" asp-action="Index" class="footer-link">Đơn của tôi</a><br />
+                        <a asp-controller="Account" asp-action="Login" class="footer-link">Tài khoản</a>
+                    </div>
+
+                    <div class="col-lg-2">
+                        <h6 class="footer-title">Liên hệ</h6>
+                        <div class="footer-text">Email: support@dogoquangthuy.vn</div>
+                        <div class="footer-text">Hotline: 0123 456 789</div>
+                        <div class="footer-text">08:00 - 17:30</div>
+                    </div>
+                </div>
+
+                <div class="footer-bottom d-flex flex-column flex-md-row justify-content-between gap-2">
+                    <div>© @DateTime.Now.Year - Đồ Gỗ Quảng Thủy. All rights reserved.</div>
+                    <div>Thiết kế giao diện theo phong cách nội thất hiện đại.</div>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

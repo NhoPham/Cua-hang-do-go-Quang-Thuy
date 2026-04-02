@@ -1,0 +1,141 @@
+@model CheckoutViewModel
+
+@{
+    ViewData["Title"] = "Thanh toán";
+}
+
+<div class="wood-page">
+    <section class="wood-page-hero mb-4">
+        <div class="row g-4 align-items-center position-relative" style="z-index:2;">
+            <div class="col-lg-8">
+                <div class="wood-page-kicker mb-3">
+                    <span>•</span>
+                    <span>Hoàn tất đặt hàng</span>
+                </div>
+                <h1 class="wood-page-title">Xác nhận thông tin giao hàng và thanh toán</h1>
+                <p class="wood-page-subtitle">Điền chính xác thông tin nhận hàng để đơn được xử lý nhanh và theo dõi dễ dàng hơn.</p>
+            </div>
+            <div class="col-lg-4">
+                <div class="wood-mini-stat-grid">
+                    <div class="wood-mini-stat">
+                        <div class="wood-mini-stat-label">Sản phẩm</div>
+                        <div class="wood-mini-stat-value">@Model.Items.Sum(x => x.Quantity)</div>
+                    </div>
+                    <div class="wood-mini-stat">
+                        <div class="wood-mini-stat-label">Tổng tiền</div>
+                        <div class="wood-mini-stat-value">@Model.TotalAmount.ToString("N0") đ</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="row g-4">
+        <div class="col-lg-7">
+            <div class="surface-card">
+                <div class="surface-card-body-lg">
+                    <div class="mb-4">
+                        <h2 class="surface-section-title mb-2">Thông tin nhận hàng</h2>
+                        <p class="surface-section-subtitle">Hoàn thiện biểu mẫu để tạo đơn hàng mới.</p>
+                    </div>
+
+                    <form asp-action="Checkout" method="post">
+                        @Html.AntiForgeryToken()
+                        <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label asp-for="ReceiverName" class="wood-label"></label>
+                                <input asp-for="ReceiverName" class="form-control wood-input" />
+                                <span asp-validation-for="ReceiverName" class="text-danger small"></span>
+                            </div>
+                            <div class="col-md-6">
+                                <label asp-for="Phone" class="wood-label"></label>
+                                <input asp-for="Phone" class="form-control wood-input" />
+                                <span asp-validation-for="Phone" class="text-danger small"></span>
+                            </div>
+                        </div>
+
+                        <div class="mt-3">
+                            <label asp-for="Email" class="wood-label"></label>
+                            <input asp-for="Email" class="form-control wood-input" />
+                            <span asp-validation-for="Email" class="text-danger small"></span>
+                        </div>
+
+                        <div class="mt-3">
+                            <label asp-for="ShippingAddress" class="wood-label"></label>
+                            <textarea asp-for="ShippingAddress" class="form-control wood-textarea"></textarea>
+                            <span asp-validation-for="ShippingAddress" class="text-danger small"></span>
+                        </div>
+
+                        <div class="mt-3">
+                            <label asp-for="PaymentMethod" class="wood-label"></label>
+                            <select asp-for="PaymentMethod" class="form-select wood-select">
+                                <option value="@PaymentMethods.CashOnDelivery">Thanh toán khi nhận hàng</option>
+                                <option value="@PaymentMethods.BankTransfer">Chuyển khoản</option>
+                            </select>
+                            <span asp-validation-for="PaymentMethod" class="text-danger small"></span>
+                        </div>
+
+                        <div class="wood-side-note mt-3">
+                            Với phương thức chuyển khoản, admin có thể xác nhận trạng thái thanh toán sau khi nhận tiền.
+                        </div>
+
+                        <div class="mt-3">
+                            <label asp-for="Note" class="wood-label"></label>
+                            <textarea asp-for="Note" class="form-control wood-textarea"></textarea>
+                        </div>
+
+                        <div class="d-grid d-md-flex gap-2 mt-4">
+                            <button class="btn wood-btn-primary" type="submit">Xác nhận đặt hàng</button>
+                            <a asp-controller="Cart" asp-action="Index" class="btn wood-btn-outline">Quay lại giỏ hàng</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-5">
+            <div class="wood-sidebar-sticky">
+                <div class="surface-card-dark">
+                    <div class="surface-card-body-lg">
+                        <h3 class="text-white fw-bold mb-3">Đơn hàng của bạn</h3>
+
+                        <div class="d-grid gap-3 mb-3">
+                            @foreach (var item in Model.Items)
+                            {
+                                <div class="d-flex align-items-center gap-3">
+                                    <img src="@item.ProductImage"
+                                         alt="@item.ProductName"
+                                         class="wood-thumb-sm" />
+                                    <div class="flex-grow-1">
+                                        <div class="fw-semibold">@item.ProductName</div>
+                                        <div class="small text-white-50">@item.Quantity x @item.UnitPrice.ToString("N0") đ</div>
+                                    </div>
+                                    <div class="fw-semibold">@item.SubTotal.ToString("N0") đ</div>
+                                </div>
+                            }
+                        </div>
+
+                        <div class="wood-divider border-white border-opacity-10"></div>
+
+                        <div class="wood-summary-row border-0 pt-0">
+                            <span class="text-white-50">Tổng thanh toán</span>
+                            <span class="wood-summary-total text-white">@Model.TotalAmount.ToString("N0") đ</span>
+                        </div>
+
+                        <div class="small text-white-50 mt-3">
+                            Sau khi đặt hàng, bạn có thể theo dõi đơn ở mục “Đơn của tôi” hoặc trang tra cứu đơn hàng.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

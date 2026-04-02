@@ -1,0 +1,144 @@
+@model IEnumerable<QLBH.ViewModels.AdminCustomerViewModel>
+
+@{
+    ViewData["Title"] = "Quản lý khách hàng";
+
+    var keyword = ViewBag.Keyword as string;
+    var roleFilter = ViewBag.RoleFilter as string;
+}
+
+<div class="wood-page">
+    <section class="wood-page-hero mb-4">
+        <div class="row g-4 align-items-center position-relative" style="z-index:2;">
+            <div class="col-lg-8">
+                <div class="wood-page-kicker mb-3">
+                    <span>•</span>
+                    <span>Tài khoản & phân quyền</span>
+                </div>
+                <h1 class="wood-page-title">Quản lý khách hàng</h1>
+                <p class="wood-page-subtitle">Tìm kiếm tài khoản, lọc vai trò và cập nhật quyền truy cập trong một giao diện đồng bộ với khu vực admin.</p>
+            </div>
+            <div class="col-lg-4">
+                <div class="wood-mini-stat-grid">
+                    <div class="wood-mini-stat">
+                        <div class="wood-mini-stat-label">Tổng tài khoản</div>
+                        <div class="wood-mini-stat-value">@Model.Count()</div>
+                    </div>
+                    <div class="wood-mini-stat">
+                        <div class="wood-mini-stat-label">Vai trò đang lọc</div>
+                        <div class="wood-mini-stat-value">@(string.IsNullOrWhiteSpace(roleFilter) ? "Tất cả" : roleFilter)</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <form method="get" class="surface-card mb-4">
+        <div class="surface-card-body">
+            <div class="row g-3 align-items-end">
+                <div class="col-lg-6">
+                    <label class="wood-label">Tìm theo tên đăng nhập hoặc email</label>
+                    <input type="text"
+                           name="keyword"
+                           value="@keyword"
+                           class="form-control wood-input"
+                           placeholder="Nhập username hoặc email..." />
+                </div>
+
+                <div class="col-lg-3">
+                    <label class="wood-label">Vai trò</label>
+                    <select name="roleFilter" class="form-select wood-select">
+                        <option value="">Tất cả</option>
+                        <option value="customer" selected="@(roleFilter == "customer" ? "selected" : null)">Khách hàng</option>
+                        <option value="admin" selected="@(roleFilter == "admin" ? "selected" : null)">Admin</option>
+                    </select>
+                </div>
+
+                <div class="col-lg-3">
+                    <div class="d-grid d-md-flex gap-2">
+                        <button type="submit" class="btn wood-btn-primary flex-fill">Lọc</button>
+                        <a asp-action="Customers" class="btn wood-btn-outline flex-fill">Đặt lại</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+
+    <div class="surface-card">
+        <div class="surface-card-body p-0">
+            <div class="wood-table-wrap table-responsive">
+                <table class="table wood-table align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th class="ps-4">ID</th>
+                            <th>Tài khoản</th>
+                            <th>Email</th>
+                            <th>Số đơn</th>
+                            <th>Tổng chi tiêu</th>
+                            <th>Vai trò</th>
+                            <th class="text-end pe-4">Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model.Any())
+                        {
+                            foreach (var item in Model)
+                            {
+                                <tr>
+                                    <td class="ps-4 fw-semibold">#@item.Id</td>
+
+                                    <td>
+                                        <div class="fw-semibold">@item.Username</div>
+                                    </td>
+
+                                    <td>@item.Email</td>
+
+                                    <td>@item.OrderCount</td>
+
+                                    <td class="fw-semibold text-wood-brown">@item.TotalSpent.ToString("N0") đ</td>
+
+                                    <td>
+                                        @if (item.Role == "admin")
+                                        {
+                                            <span class="wood-status-chip warning">Admin</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="wood-status-chip success">Khách hàng</span>
+                                        }
+                                    </td>
+
+                                    <td class="text-end pe-4">
+                                        <form asp-action="UpdateCustomerRole" method="post" class="d-inline-flex flex-wrap gap-2 align-items-center justify-content-end">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="id" value="@item.Id" />
+                                            <input type="hidden" name="keyword" value="@keyword" />
+                                            <input type="hidden" name="roleFilter" value="@roleFilter" />
+
+                                            <select name="role" class="form-select wood-select" style="min-width: 140px; min-height: 42px;">
+                                                <option value="customer" selected="@(item.Role == "customer" ? "selected" : null)">Khách hàng</option>
+                                                <option value="admin" selected="@(item.Role == "admin" ? "selected" : null)">Admin</option>
+                                            </select>
+
+                                            <button type="submit" class="btn wood-btn-primary px-3 py-2">
+                                                Lưu
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="7" class="text-center py-5 text-wood-muted">
+                                    Không tìm thấy tài khoản phù hợp.
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

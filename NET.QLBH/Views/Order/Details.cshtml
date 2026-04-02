@@ -1,0 +1,168 @@
+@model Order
+
+@{
+    ViewData["Title"] = "Chi tiết đơn hàng";
+}
+
+<div class="wood-page">
+    <section class="wood-page-hero mb-4">
+        <div class="row g-4 align-items-center position-relative" style="z-index:2;">
+            <div class="col-lg-8">
+                <div class="wood-page-kicker mb-3">
+                    <span>•</span>
+                    <span>Chi tiết đơn hàng</span>
+                </div>
+                <h1 class="wood-page-title">Mã đơn: @Model.OrderCode</h1>
+                <p class="wood-page-subtitle">Xem đầy đủ sản phẩm, thông tin giao hàng, trạng thái đơn và thanh toán trong cùng một bố cục thống nhất.</p>
+            </div>
+            <div class="col-lg-4">
+                <div class="d-flex flex-wrap gap-2 justify-content-lg-end">
+                    <span class="badge @OrderUiHelper.OrderStatusBadgeClass(Model.OrderStatus)">
+                        @OrderUiHelper.OrderStatusLabel(Model.OrderStatus)
+                    </span>
+                    <span class="badge @OrderUiHelper.PaymentStatusBadgeClass(Model.PaymentStatus)">
+                        @OrderUiHelper.PaymentStatusLabel(Model.PaymentStatus)
+                    </span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="d-flex justify-content-end mb-3">
+        <a asp-action="@(User.IsInRole("admin") ? "Admin" : "Index")" class="btn wood-btn-outline">Quay lại</a>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-7">
+            <div class="surface-card mb-4">
+                <div class="surface-card-body-lg">
+                    <h2 class="surface-section-title mb-3">Sản phẩm trong đơn</h2>
+
+                    <div class="wood-table-wrap table-responsive">
+                        <table class="table wood-table align-middle">
+                            <thead>
+                                <tr>
+                                    <th>Sản phẩm</th>
+                                    <th class="text-end">Đơn giá</th>
+                                    <th class="text-center">SL</th>
+                                    <th class="text-end">Thành tiền</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var item in Model.Items)
+                                {
+                                    <tr>
+                                        <td>@item.ProductName</td>
+                                        <td class="text-end">@item.UnitPrice.ToString("N0") đ</td>
+                                        <td class="text-center">@item.Quantity</td>
+                                        <td class="text-end fw-semibold">@item.Subtotal.ToString("N0") đ</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="text-end mt-3">
+                        <div class="text-wood-muted small">Tổng tiền đơn</div>
+                        <div class="h4 fw-bold text-wood-brown mb-0">@Model.TotalAmount.ToString("N0") đ</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-5">
+            <div class="d-grid gap-4 wood-sidebar-sticky">
+                <div class="surface-card-soft">
+                    <div class="surface-card-body-lg">
+                        <h2 class="surface-section-title">Thông tin đơn hàng</h2>
+
+                        <div class="wood-info-list mt-3">
+                            <div class="wood-info-item">
+                                <div class="wood-info-label">Người nhận</div>
+                                <div class="wood-info-value">@Model.ReceiverName</div>
+                            </div>
+                            <div class="wood-info-item">
+                                <div class="wood-info-label">Email</div>
+                                <div class="wood-info-value">@Model.Email</div>
+                            </div>
+                            <div class="wood-info-item">
+                                <div class="wood-info-label">Số điện thoại</div>
+                                <div class="wood-info-value">@Model.Phone</div>
+                            </div>
+                            <div class="wood-info-item">
+                                <div class="wood-info-label">Địa chỉ giao hàng</div>
+                                <div class="wood-info-value">@Model.ShippingAddress</div>
+                            </div>
+                            <div class="wood-info-item">
+                                <div class="wood-info-label">Phương thức thanh toán</div>
+                                <div class="wood-info-value">@OrderUiHelper.PaymentMethodLabel(Model.PaymentMethod)</div>
+                            </div>
+                            <div class="wood-info-item">
+                                <div class="wood-info-label">Ngày tạo</div>
+                                <div class="wood-info-value">@Model.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</div>
+                            </div>
+
+                            @if (!string.IsNullOrWhiteSpace(Model.Note))
+                            {
+                                <div class="wood-info-item">
+                                    <div class="wood-info-label">Ghi chú</div>
+                                    <div class="wood-info-value">@Model.Note</div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+
+                @if (User.IsInRole("admin"))
+                {
+                    <div class="surface-card">
+                        <div class="surface-card-body-lg">
+                            <h2 class="surface-section-title mb-3">Cập nhật trạng thái</h2>
+
+                            <form asp-action="UpdateStatus" method="post">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="id" value="@Model.Id" />
+
+                                <div class="mb-3">
+                                    <label class="wood-label">Trạng thái đơn hàng</label>
+                                    <select class="form-select wood-select" name="orderStatus">
+                                        @foreach (var status in OrderStatuses.All)
+                                        {
+                                            if (status == Model.OrderStatus)
+                                            {
+                                                <option value="@status" selected>@OrderUiHelper.OrderStatusLabel(status)</option>
+                                            }
+                                            else
+                                            {
+                                                <option value="@status">@OrderUiHelper.OrderStatusLabel(status)</option>
+                                            }
+                                        }
+                                    </select>
+                                </div>
+
+                                <div class="mb-4">
+                                    <label class="wood-label">Trạng thái thanh toán</label>
+                                    <select class="form-select wood-select" name="paymentStatus">
+                                        @foreach (var status in PaymentStatuses.All)
+                                        {
+                                            if (status == Model.PaymentStatus)
+                                            {
+                                                <option value="@status" selected>@OrderUiHelper.PaymentStatusLabel(status)</option>
+                                            }
+                                            else
+                                            {
+                                                <option value="@status">@OrderUiHelper.PaymentStatusLabel(status)</option>
+                                            }
+                                        }
+                                    </select>
+                                </div>
+
+                                <button class="btn wood-btn-primary" type="submit">Lưu trạng thái</button>
+                            </form>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
