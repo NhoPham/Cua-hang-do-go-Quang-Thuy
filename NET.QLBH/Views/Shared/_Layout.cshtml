@@ -344,14 +344,14 @@
             font-size: .95rem;
         }
 
-        .qt-ai-chat {
+        .assistant-chat {
             position: fixed;
             right: 20px;
             bottom: 20px;
             z-index: 1080;
         }
 
-        .qt-ai-chat__toggle {
+        .assistant-chat__toggle {
             border: none;
             border-radius: 999px;
             padding: 14px 18px;
@@ -361,7 +361,7 @@
             font-weight: 700;
         }
 
-        .qt-ai-chat__panel {
+        .assistant-chat__panel {
             width: min(380px, calc(100vw - 32px));
             height: 520px;
             margin-top: 12px;
@@ -374,7 +374,7 @@
             border: 1px solid var(--wood-border);
         }
 
-        .qt-ai-chat__header {
+        .assistant-chat__header {
             background: linear-gradient(135deg, var(--wood-900), var(--wood-700));
             color: #fff;
             padding: 16px;
@@ -384,7 +384,7 @@
             gap: 12px;
         }
 
-        .qt-ai-chat__messages {
+        .assistant-chat__messages {
             flex: 1;
             overflow-y: auto;
             padding: 16px;
@@ -394,7 +394,7 @@
             gap: 12px;
         }
 
-        .qt-ai-chat__message {
+        .assistant-chat__message {
             max-width: 85%;
             padding: 12px 14px;
             border-radius: 18px;
@@ -403,20 +403,20 @@
             font-size: .95rem;
         }
 
-        .qt-ai-chat__message--bot {
+        .assistant-chat__message--bot {
             align-self: flex-start;
             background: #fff;
             border: 1px solid var(--wood-border);
             color: var(--wood-text);
         }
 
-        .qt-ai-chat__message--user {
+        .assistant-chat__message--user {
             align-self: flex-end;
             background: var(--wood-900);
             color: #fff;
         }
 
-        .qt-ai-chat__form {
+        .assistant-chat__form {
             padding: 14px;
             border-top: 1px solid var(--wood-border);
             display: grid;
@@ -424,12 +424,12 @@
             background: #fff;
         }
 
-        .qt-ai-chat__form textarea {
+        .assistant-chat__form textarea {
             border-radius: 14px;
             border: 1px solid var(--wood-border);
         }
 
-        .qt-ai-chat__form .btn {
+        .assistant-chat__form .btn {
             border-radius: 14px;
             background: var(--wood-900);
             border-color: var(--wood-900);
@@ -466,7 +466,7 @@
                 padding: .85rem 1rem !important;
             }
 
-            .qt-ai-chat {
+            .assistant-chat {
                 right: 14px;
                 bottom: 14px;
             }
@@ -668,28 +668,28 @@
         </footer>
     </div>
 
-    <div id="qt-ai-chat" class="qt-ai-chat">
-        <button type="button" id="qt-ai-chat-toggle" class="qt-ai-chat__toggle">
-            Tư vấn AI
+    <div id="assistant-chat" class="assistant-chat">
+        <button type="button" id="assistant-chat-toggle" class="assistant-chat__toggle">
+            Trợ lý tư vấn
         </button>
 
-        <div id="qt-ai-chat-panel" class="qt-ai-chat__panel d-none">
-            <div class="qt-ai-chat__header">
+        <div id="assistant-chat-panel" class="assistant-chat__panel d-none">
+            <div class="assistant-chat__header">
                 <div>
-                    <div class="fw-semibold">AI tư vấn</div>
-                    <div class="small text-white-50">Gợi ý sản phẩm và hỗ trợ đặt hàng theo yêu cầu</div>
+                    <div class="fw-semibold">Trợ lý tư vấn</div>
+                    <div class="small text-white-50">Gợi ý sản phẩm và hỗ trợ giải đáp đặt hàng</div>
                 </div>
-                <button type="button" id="qt-ai-chat-close" class="btn btn-sm btn-light">×</button>
+                <button type="button" id="assistant-chat-close" class="btn btn-sm btn-light">×</button>
             </div>
 
-            <div id="qt-ai-chat-messages" class="qt-ai-chat__messages">
-                <div class="qt-ai-chat__message qt-ai-chat__message--bot">
+            <div id="assistant-chat-messages" class="assistant-chat__messages">
+                <div class="assistant-chat__message assistant-chat__message--bot">
                     Xin chào, mình có thể giúp bạn chọn sản phẩm gỗ phù hợp hoặc hướng dẫn đặt hàng theo yêu cầu.
                 </div>
             </div>
 
-            <form id="qt-ai-chat-form" class="qt-ai-chat__form">
-                <textarea id="qt-ai-chat-input"
+            <form id="assistant-chat-form" class="assistant-chat__form">
+                <textarea id="assistant-chat-input"
                           class="form-control"
                           rows="2"
                           placeholder="Ví dụ: Tôi cần bàn ăn gỗ sồi cho 6 người..."></textarea>
@@ -703,18 +703,18 @@
 
     <script>
         (() => {
-            const toggleBtn = document.getElementById('qt-ai-chat-toggle');
-            const closeBtn = document.getElementById('qt-ai-chat-close');
-            const panel = document.getElementById('qt-ai-chat-panel');
-            const form = document.getElementById('qt-ai-chat-form');
-            const input = document.getElementById('qt-ai-chat-input');
-            const messages = document.getElementById('qt-ai-chat-messages');
+            const toggleBtn = document.getElementById('assistant-chat-toggle');
+            const closeBtn = document.getElementById('assistant-chat-close');
+            const panel = document.getElementById('assistant-chat-panel');
+            const form = document.getElementById('assistant-chat-form');
+            const input = document.getElementById('assistant-chat-input');
+            const messages = document.getElementById('assistant-chat-messages');
 
             if (!toggleBtn || !closeBtn || !panel || !form || !input || !messages) return;
 
             const appendMessage = (text, type) => {
                 const div = document.createElement('div');
-                div.className = `qt-ai-chat__message qt-ai-chat__message--${type}`;
+                div.className = `assistant-chat__message assistant-chat__message--${type}`;
                 div.textContent = text;
                 messages.appendChild(div);
                 messages.scrollTop = messages.scrollHeight;
@@ -736,7 +736,7 @@
                 const thinkingNode = messages.lastElementChild;
 
                 try {
-                    const response = await fetch('/AIChat/ask', {
+                    const response = await fetch('/Assistant/ask', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ message })
@@ -744,10 +744,10 @@
 
                     const data = await response.json();
                     thinkingNode.remove();
-                    appendMessage(data.reply || 'Mình chưa trả lời được lúc này.', 'bot');
+                    appendMessage(data.reply || 'Trợ lý chưa trả lời được lúc này.', 'bot');
                 } catch {
                     thinkingNode.remove();
-                    appendMessage('AI đang bận. Bạn thử lại sau nhé.', 'bot');
+                    appendMessage('Trợ lý đang bận. Bạn thử lại sau nhé.', 'bot');
                 }
             });
         })();

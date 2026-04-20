@@ -7,83 +7,149 @@
     var status = ViewBag.Status as string;
 }
 
-<div class="container py-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-            <h1 class="h3 mb-1">Quản lý yêu cầu đặt hàng</h1>
-            <p class="text-muted mb-0">Theo dõi yêu cầu đóng mới, chỉnh sửa, báo giá và tiến độ thực hiện.</p>
-        </div>
-    </div>
-
-    <form method="get" class="row g-3 mb-4">
-        <div class="col-md-5">
-            <input name="keyword" value="@keyword" class="form-control" placeholder="Tìm theo mã, tên khách, email, sản phẩm..." />
-        </div>
-        <div class="col-md-3">
-            <select name="status" class="form-select">
-                <option value="">Tất cả trạng thái</option>
-                @foreach (var item in CustomOrderStatuses.All)
-                {
-                    <option value="@item" selected="@(status == item)">@CustomOrderUiHelper.StatusLabel(item)</option>
-                }
-            </select>
-        </div>
-        <div class="col-md-4 d-flex gap-2">
-            <button class="btn btn-dark" type="submit">Lọc</button>
-            <a asp-action="Admin" class="btn btn-outline-secondary">Làm mới</a>
-        </div>
-    </form>
-
-    <div class="d-grid gap-3">
-        @foreach (var request in Model)
-        {
-            <div class="card border-0 shadow-sm rounded-4">
-                <div class="card-body p-4">
-                    <div class="d-flex flex-column flex-xl-row justify-content-between gap-4">
-                        <div class="flex-grow-1">
-                            <div class="d-flex flex-wrap gap-2 align-items-center mb-2">
-                                <h2 class="h5 mb-0">@request.RequestCode</h2>
-                                <span class="badge @CustomOrderUiHelper.StatusBadgeClass(request.Status)">@CustomOrderUiHelper.StatusLabel(request.Status)</span>
-                            </div>
-
-                            <div class="text-muted small mb-2">@request.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</div>
-                            <div><strong>Khách:</strong> @request.CustomerName - @request.Email - @request.Phone</div>
-                            <div><strong>Sản phẩm:</strong> @request.RequestedProductName</div>
-                            <div><strong>Số lượng:</strong> @request.Quantity</div>
-                            @if (request.EstimatedBudget.HasValue)
-                            {
-                                <div><strong>Ngân sách:</strong> @request.EstimatedBudget.Value.ToString("N0") VND</div>
-                            }
-                            @if (!string.IsNullOrWhiteSpace(request.AdminNote))
-                            {
-                                <div class="mt-2 small text-muted"><strong>Ghi chú hiện tại:</strong> @request.AdminNote</div>
-                            }
-                        </div>
-
-                        <div class="flex-shrink-0" style="min-width:320px;">
-                            <form asp-action="UpdateStatus" method="post" class="row g-2">
-                                @Html.AntiForgeryToken()
-                                <input type="hidden" name="id" value="@request.Id" />
-                                <div class="col-12">
-                                    <select name="status" class="form-select">
-                                        @foreach (var item in CustomOrderStatuses.All)
-                                        {
-                                            <option value="@item" selected="@(request.Status == item)">@CustomOrderUiHelper.StatusLabel(item)</option>
-                                        }
-                                    </select>
-                                </div>
-                                <div class="col-12">
-                                    <textarea name="adminNote" class="form-control" rows="3" placeholder="Ghi chú cho khách hoặc nội bộ">@request.AdminNote</textarea>
-                                </div>
-                                <div class="col-12 d-flex gap-2 flex-wrap">
-                                    <button type="submit" class="btn btn-dark">Cập nhật</button>
-                                    <a asp-action="MyDetails" asp-route-id="@request.Id" class="btn btn-outline-secondary">Xem chi tiết</a>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
+<div class="container py-4 py-lg-5">
+    <div class="card border-0 shadow-sm rounded-4 mb-4">
+        <div class="card-body p-4 p-lg-5">
+            <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-4">
+                <div>
+                    <div class="text-uppercase small text-muted fw-semibold mb-2">Khu vực quản trị</div>
+                    <h1 class="h3 fw-bold mb-2">Quản lý yêu cầu đặt hàng</h1>
+                    <p class="text-muted mb-0">Theo dõi tiến độ xử lý, cập nhật trạng thái và xem nhanh toàn bộ yêu cầu đặt riêng của khách hàng.</p>
+                </div>
+                <div class="text-muted small">
+                    Tổng số yêu cầu hiển thị: <strong>@Model.Count()</strong>
                 </div>
             </div>
-        }
+
+            <form method="get" class="row g-3 align-items-end">
+                <div class="col-lg-5">
+                    <label class="form-label fw-semibold">Từ khóa</label>
+                    <input name="keyword" value="@keyword" class="form-control form-control-lg" placeholder="Mã yêu cầu, khách hàng, email, sản phẩm..." />
+                </div>
+                <div class="col-lg-3">
+                    <label class="form-label fw-semibold">Trạng thái</label>
+                    <select name="status" class="form-select form-select-lg">
+                        <option value="">Tất cả trạng thái</option>
+                        @foreach (var item in CustomOrderStatuses.All)
+                        {
+                            <option value="@item" selected="@(status == item)">@CustomOrderUiHelper.StatusLabel(item)</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-lg-4 d-flex gap-2">
+                    <button class="btn btn-dark btn-lg px-4" type="submit">Lọc danh sách</button>
+                    <a asp-action="Admin" class="btn btn-outline-secondary btn-lg px-4">Làm mới</a>
+                </div>
+            </form>
+        </div>
     </div>
+
+    @if (!Model.Any())
+    {
+        <div class="card border-0 shadow-sm rounded-4">
+            <div class="card-body p-5 text-center">
+                <h2 class="h5 fw-bold mb-2">Chưa có yêu cầu phù hợp</h2>
+                <p class="text-muted mb-0">Hãy đổi bộ lọc hoặc từ khóa để xem các yêu cầu khác.</p>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="d-grid gap-4">
+            @foreach (var request in Model)
+            {
+                <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+                    <div class="card-body p-4 p-lg-5">
+                        <div class="d-flex flex-column flex-xl-row justify-content-between gap-4 mb-4">
+                            <div class="flex-grow-1">
+                                <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
+                                    <div class="text-muted small fw-semibold">@request.RequestCode</div>
+                                    <span class="badge @CustomOrderUiHelper.StatusBadgeClass(request.Status)">@CustomOrderUiHelper.StatusLabel(request.Status)</span>
+                                </div>
+
+                                <h2 class="h4 fw-bold mb-2">@request.RequestedProductName</h2>
+                                <div class="text-muted mb-3">Khách hàng: <strong>@request.CustomerName</strong> - @request.Email - @request.Phone</div>
+
+                                <div class="row g-3 small">
+                                    <div class="col-md-4">
+                                        <div class="text-muted">Thời gian tạo</div>
+                                        <div class="fw-semibold">@request.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="text-muted">Ngân sách dự kiến</div>
+                                        <div class="fw-semibold">@(request.EstimatedBudget.HasValue ? request.EstimatedBudget.Value.ToString("N0") + " VND" : "Chưa có")</div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="text-muted">Ngày mong muốn nhận</div>
+                                        <div class="fw-semibold">@(request.DesiredDeliveryDate?.ToString("dd/MM/yyyy") ?? "Chưa có")</div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="text-muted">Loại gỗ</div>
+                                        <div class="fw-semibold">@(string.IsNullOrWhiteSpace(request.WoodType) ? "Chưa có" : request.WoodType)</div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="text-muted">Kích thước</div>
+                                        <div class="fw-semibold">@(string.IsNullOrWhiteSpace(request.Dimensions) ? "Chưa có" : request.Dimensions)</div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="text-muted">Số lượng</div>
+                                        <div class="fw-semibold">@request.Quantity</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="flex-shrink-0" style="width:min(100%, 420px);">
+                                <div class="border rounded-4 p-3 bg-light h-100">
+                                    <div class="fw-semibold mb-2">Mô tả khách hàng</div>
+                                    <div class="text-muted small" style="white-space:pre-line;">@request.Description</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        @if (!string.IsNullOrWhiteSpace(request.AdminNote))
+                        {
+                            <div class="alert alert-secondary border-0 rounded-4 mb-4">
+                                <div class="fw-semibold mb-1">Ghi chú hiện tại của admin</div>
+                                <div style="white-space:pre-line;">@request.AdminNote</div>
+                            </div>
+                        }
+
+                        <form asp-action="UpdateStatus" method="post" class="row g-3 align-items-end">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="id" value="@request.Id" />
+                            <input type="hidden" name="currentStatus" value="@status" />
+                            <input type="hidden" name="currentKeyword" value="@keyword" />
+
+                            <div class="col-lg-3">
+                                <label class="form-label fw-semibold">Trạng thái</label>
+                                <select name="status" class="form-select">
+                                    @foreach (var item in CustomOrderStatuses.All)
+                                    {
+                                        <option value="@item" selected="@(request.Status == item)">@CustomOrderUiHelper.StatusLabel(item)</option>
+                                    }
+                                </select>
+                            </div>
+
+                            <div class="col-lg-6">
+                                <label class="form-label fw-semibold">Ghi chú admin</label>
+                                <textarea name="adminNote" class="form-control" rows="2" placeholder="Ví dụ: đã gọi lại, hẹn đo đạc, báo giá lần 1...">@request.AdminNote</textarea>
+                            </div>
+
+                            <div class="col-lg-3">
+                                <div class="d-grid gap-2">
+                                    <button type="submit" class="btn btn-dark">Cập nhật yêu cầu</button>
+                                    <a asp-action="MyDetails"
+                                       asp-route-id="@request.Id"
+                                       asp-route-returnTo="admin"
+                                       asp-route-status="@status"
+                                       asp-route-keyword="@keyword"
+                                       class="btn btn-outline-secondary">Xem chi tiết</a>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            }
+        </div>
+    }
 </div>

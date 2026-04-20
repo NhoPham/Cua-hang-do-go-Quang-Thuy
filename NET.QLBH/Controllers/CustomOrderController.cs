@@ -147,7 +147,7 @@ public class CustomOrderController : Controller
 
     [HttpGet]
     [AllowAnonymous]
-    public async Task<IActionResult> Details(string code, string email)
+    public async Task<IActionResult> Details(string code, string email, string? returnTo, string? status, string? keyword)
     {
         code = (code ?? string.Empty).Trim();
         email = (email ?? string.Empty).Trim().ToLowerInvariant();
@@ -168,12 +168,13 @@ public class CustomOrderController : Controller
             return RedirectToAction(nameof(Lookup));
         }
 
+        ApplyDetailReturnNavigation(returnTo, status, keyword);
         return View(request);
     }
 
     [Authorize]
     [HttpGet]
-    public async Task<IActionResult> MyDetails(int id)
+    public async Task<IActionResult> MyDetails(int id, string? returnTo, string? status, string? keyword)
     {
         var request = await _context.CustomOrderRequests
             .Include(x => x.Product)
@@ -191,6 +192,7 @@ public class CustomOrderController : Controller
             return Forbid();
         }
 
+        ApplyDetailReturnNavigation(returnTo, status, keyword);
         return View("Details", request);
     }
 
@@ -235,15 +237,21 @@ public class CustomOrderController : Controller
     [Authorize(Roles = "admin")]
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> UpdateStatus(int id, string status, string? adminNote)
+    public async Task<IActionResult> UpdateStatus(int id, string status, string? adminNote, string? currentStatus, string? currentKeyword)
     {
         status = CustomOrderUiHelper.NormalizeStatus(status);
+        var redirectStatus = string.IsNullOrWhiteSpace(currentStatus)
+            ? null
+            : CustomOrderUiHelper.NormalizeStatus(currentStatus);
+        var redirectKeyword = string.IsNullOrWhiteSpace(currentKeyword)
+            ? null
+            : currentKeyword.Trim();
 
         var request = await _context.CustomOrderRequests.FirstOrDefaultAsync(x => x.Id == id);
         if (request == null)
         {
             TempData["ErrorMessage"] = "Không tìm thấy yêu cầu.";
-            return RedirectToAction(nameof(Admin));
+            return RedirectToAction(nameof(Admin), new { status = redirectStatus, keyword = redirectKeyword });
         }
 
         request.Status = status;
@@ -252,7 +260,14 @@ public class CustomOrderController : Controller
         await _context.SaveChangesAsync();
 
         TempData["SuccessMessage"] = $"Đã cập nhật yêu cầu {request.RequestCode}.";
-        return RedirectToAction(nameof(Admin), new { status });
+        return RedirectToAction(nameof(Admin), new { status = redirectStatus, keyword = redirectKeyword });
+    }
+
+    private void ApplyDetailReturnNavigation(string? returnTo, string? status, string? keyword)
+    {
+        ViewBag.ReturnTo = string.IsNullOrWhiteSpace(returnTo) ? null : returnTo.Trim().ToLowerInvariant();
+        ViewBag.ReturnStatus = string.IsNullOrWhiteSpace(status) ? null : CustomOrderUiHelper.NormalizeStatus(status);
+        ViewBag.ReturnKeyword = string.IsNullOrWhiteSpace(keyword) ? null : keyword.Trim();
     }
 
     private int? GetCurrentUserId()
