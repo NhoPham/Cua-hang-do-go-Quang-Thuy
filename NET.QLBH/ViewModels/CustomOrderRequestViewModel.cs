@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.Http;
 
 namespace QLBH.ViewModels;
 
@@ -6,7 +7,7 @@ public class CustomOrderRequestViewModel
 {
     public int? ProductId { get; set; }
 
-    [Required(ErrorMessage = "Bạn chưa nhập họ tên.")]
+    [Required(ErrorMessage = "Bạn chưa nhập họ và tên.")]
     [Display(Name = "Họ và tên")]
     public string CustomerName { get; set; } = string.Empty;
 
@@ -25,7 +26,7 @@ public class CustomOrderRequestViewModel
     [Display(Name = "Loại gỗ mong muốn")]
     public string? WoodType { get; set; }
 
-    [Display(Name = "Kích thước")]
+    [Display(Name = "Kích thước mong muốn")]
     public string? Dimensions { get; set; }
 
     [Range(1, 999, ErrorMessage = "Số lượng phải lớn hơn 0.")]
@@ -43,8 +44,11 @@ public class CustomOrderRequestViewModel
     [Display(Name = "Mô tả chi tiết")]
     public string Description { get; set; } = string.Empty;
 
-    [Display(Name = "URL ảnh tham khảo (nhiều link cách nhau bằng dấu phẩy)")]
+    [Display(Name = "Link ảnh tham khảo (nếu có, nhiều link cách nhau bằng dấu phẩy hoặc xuống dòng)")]
     public string? ReferenceImageUrls { get; set; }
+
+    [Display(Name = "Tải ảnh tham khảo từ máy")]
+    public List<IFormFile>? ReferenceImages { get; set; }
 
     public string? ProductName { get; set; }
     public string? ProductImage { get; set; }

@@ -27,12 +27,19 @@ public class AIChatController : ControllerBase
             return BadRequest(new { reply = "Bạn hãy nhập câu hỏi trước khi gửi." });
         }
 
-        if (message.Length > 1200)
+        if (message.Length > 1500)
         {
             return BadRequest(new { reply = "Câu hỏi hơi dài. Bạn rút gọn giúp mình nhé." });
         }
 
-        var reply = await _aiChatService.AskAsync(message, cancellationToken);
-        return Ok(new { reply });
+        try
+        {
+            var reply = await _aiChatService.AskAsync(message, cancellationToken);
+            return Ok(new { reply });
+        }
+        catch
+        {
+            return Ok(new { reply = "AI đang bận hoặc chưa sẵn sàng. Bạn thử lại sau ít phút nhé." });
+        }
     }
 }

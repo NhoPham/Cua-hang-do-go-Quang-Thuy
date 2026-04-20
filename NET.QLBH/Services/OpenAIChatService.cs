@@ -1,66 +1,59 @@
-using System.Net.Http.Headers;
+using System.Net.Http;
 using System.Text;
 using System.Text.Json;
 using Microsoft.Extensions.Options;
 using QLBH.Settings;
 
-namespace QLBH.Services;
-
-public class OpenAIChatService : IAIChatService
+namespace QLBH.Services
 {
-    private readonly HttpClient _httpClient;
-    private readonly AIChatSettings _settings;
-
-    public OpenAIChatService(HttpClient httpClient, IOptions<AIChatSettings> settings)
+    public class OpenAIChatService : IAIChatService
     {
-        _httpClient = httpClient;
-        _settings = settings.Value;
-    }
+        private readonly HttpClient _httpClient;
+        private readonly AIChatSettings _settings;
 
-    public async Task<string> AskAsync(string message, CancellationToken cancellationToken = default)
-    {
-        if (string.IsNullOrWhiteSpace(_settings.ApiKey) || string.IsNullOrWhiteSpace(_settings.Model))
+        public OpenAIChatService(HttpClient httpClient, IOptions<AIChatSettings> options)
         {
-            return "Chat AI hiện chưa được cấu hình API key hoặc model.";
+            _httpClient = httpClient;
+            _settings = options.Value;
         }
 
-        using var request = new HttpRequestMessage(HttpMethod.Post, "https://api.openai.com/v1/chat/completions");
-        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _settings.ApiKey);
-
-        var payload = new
+        public async Task<string> AskAsync(string userMessage, CancellationToken cancellationToken = default)
         {
-            model = _settings.Model,
-            messages = new object[]
+            var systemPrompt = string.IsNullOrWhiteSpace(_settings.SystemPrompt)
+                ? "Bạn là trợ lý tư vấn bán hàng cho cửa hàng Đồ Gỗ Quảng Thủy. Luôn trả lời bằng tiếng Việt."
+                : _settings.SystemPrompt;
+
+            var payload = new
             {
-                new { role = "system", content = _settings.SystemPrompt },
-                new { role = "user", content = message }
-            },
-            temperature = 0.4,
-            max_completion_tokens = 400
-        };
+                model = string.IsNullOrWhiteSpace(_settings.Model) ? "llama3.2" : _settings.Model,
+                prompt = $"{systemPrompt}\n\nKhách hỏi: {userMessage}",
+                stream = false
+            };
 
-        request.Content = new StringContent(
-            JsonSerializer.Serialize(payload),
-            Encoding.UTF8,
-            "application/json");
+            var json = JsonSerializer.Serialize(payload);
+            using var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-        using var response = await _httpClient.SendAsync(request, cancellationToken);
-        var responseText = await response.Content.ReadAsStringAsync(cancellationToken);
+            using var response = await _httpClient.PostAsync(
+                "http://localhost:11434/api/generate",
+                content,
+                cancellationToken
+            );
 
-        if (!response.IsSuccessStatusCode)
-        {
-            return "AI tạm thời chưa phản hồi được. Bạn hãy thử lại sau ít phút.";
+            var responseText = await response.Content.ReadAsStringAsync(cancellationToken);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                return $"Ollama lỗi {(int)response.StatusCode}: {responseText}";
+            }
+
+            using var doc = JsonDocument.Parse(responseText);
+
+            if (doc.RootElement.TryGetProperty("response", out var answer))
+            {
+                return answer.GetString() ?? "AI chưa có phản hồi.";
+            }
+
+            return "AI chưa có phản hồi.";
         }
-
-        using var doc = JsonDocument.Parse(responseText);
-        var content = doc.RootElement
-            .GetProperty("choices")[0]
-            .GetProperty("message")
-            .GetProperty("content")
-            .GetString();
-
-        return string.IsNullOrWhiteSpace(content)
-            ? "Mình chưa có câu trả lời phù hợp. Bạn thử mô tả chi tiết hơn nhé."
-            : content.Trim();
     }
 }

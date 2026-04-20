@@ -28,7 +28,6 @@ public class OrderController : Controller
         }
 
         var cartVm = await BuildCheckoutViewModelAsync(userId.Value);
-
         if (!cartVm.Items.Any())
         {
             TempData["ErrorMessage"] = "Giỏ hàng của bạn đang trống.";
@@ -90,8 +89,7 @@ public class OrderController : Controller
 
             if (item.Quantity > item.Product.Stock)
             {
-                ModelState.AddModelError(string.Empty,
-                    $"Sản phẩm \"{item.Product.Name}\" chỉ còn {item.Product.Stock} sản phẩm trong kho.");
+                ModelState.AddModelError(string.Empty, $"Sản phẩm \"{item.Product.Name}\" chỉ còn {item.Product.Stock} sản phẩm trong kho.");
             }
         }
 
@@ -101,7 +99,6 @@ public class OrderController : Controller
         }
 
         await using var transaction = await _context.Database.BeginTransactionAsync();
-
         try
         {
             var order = new Order
@@ -109,7 +106,7 @@ public class OrderController : Controller
                 UserId = userId.Value,
                 OrderCode = await GenerateOrderCodeAsync(),
                 ReceiverName = model.ReceiverName.Trim(),
-                Email = model.Email.Trim().ToLower(),
+                Email = model.Email.Trim().ToLowerInvariant(),
                 Phone = model.Phone.Trim(),
                 ShippingAddress = model.ShippingAddress.Trim(),
                 Note = string.IsNullOrWhiteSpace(model.Note) ? null : model.Note.Trim(),
@@ -152,7 +149,6 @@ public class OrderController : Controller
 
             _context.CartItems.RemoveRange(cartItems);
             await _context.SaveChangesAsync();
-
             await transaction.CommitAsync();
 
             TempData["SuccessMessage"] = $"Đặt hàng thành công. Mã đơn của bạn là {order.OrderCode}.";
@@ -181,14 +177,54 @@ public class OrderController : Controller
             .OrderByDescending(x => x.CreatedAt)
             .ToListAsync();
 
-        return View(orders);
+        var customOrders = await _context.CustomOrderRequests
+            .Include(x => x.Product)
+            .Where(x => x.UserId == userId.Value)
+            .OrderByDescending(x => x.CreatedAt)
+            .ToListAsync();
+
+        var viewModel = new OrderHistoryIndexViewModel
+        {
+            Items = orders.Select(order => new OrderHistoryItemViewModel
+            {
+                Id = order.Id,
+                IsCustomOrder = false,
+                Code = order.OrderCode,
+                CreatedAt = order.CreatedAt,
+                Title = "Đơn mua hàng",
+                Description = $"{order.Items.Sum(x => x.Quantity)} sản phẩm • {order.TotalAmount:N0} VND",
+                Quantity = order.Items.Sum(x => x.Quantity),
+                TotalAmount = order.TotalAmount,
+                StatusLabel = OrderUiHelper.OrderStatusLabel(order.OrderStatus),
+                StatusBadgeClass = OrderUiHelper.OrderStatusBadgeClass(order.OrderStatus),
+                PaymentStatusLabel = OrderUiHelper.PaymentStatusLabel(order.PaymentStatus),
+                PaymentBadgeClass = OrderUiHelper.PaymentStatusBadgeClass(order.PaymentStatus)
+            })
+            .Concat(customOrders.Select(request => new OrderHistoryItemViewModel
+            {
+                Id = request.Id,
+                IsCustomOrder = true,
+                Code = request.RequestCode,
+                CreatedAt = request.CreatedAt,
+                Title = request.RequestedProductName,
+                Description = $"Yêu cầu đặt riêng • Số lượng: {request.Quantity}" +
+                              (request.EstimatedBudget.HasValue ? $" • Ngân sách: {request.EstimatedBudget.Value:N0} VND" : string.Empty),
+                Quantity = request.Quantity,
+                TotalAmount = request.EstimatedBudget,
+                StatusLabel = CustomOrderUiHelper.StatusLabel(request.Status),
+                StatusBadgeClass = CustomOrderUiHelper.StatusBadgeClass(request.Status)
+            }))
+            .OrderByDescending(x => x.CreatedAt)
+            .ToList()
+        };
+
+        return View(viewModel);
     }
 
     [Authorize]
     public async Task<IActionResult> Details(int id)
     {
         var userId = User.GetUserId();
-
         var order = await _context.Orders
             .Include(x => x.Items)
             .ThenInclude(x => x.Product)
@@ -254,7 +290,6 @@ public class OrderController : Controller
         }
 
         await using var transaction = await _context.Database.BeginTransactionAsync();
-
         try
         {
             if (order.OrderStatus != OrderStatuses.Cancelled && orderStatus == OrderStatuses.Cancelled)
@@ -267,7 +302,6 @@ public class OrderController : Controller
                     }
 
                     item.Product.Stock += item.Quantity;
-
                     _context.InventoryTransactions.Add(new InventoryTransaction
                     {
                         ProductId = item.ProductId,
@@ -284,7 +318,6 @@ public class OrderController : Controller
             order.OrderStatus = orderStatus;
             order.PaymentStatus = paymentStatus;
             order.UpdatedAt = DateTime.UtcNow;
-
             await _context.SaveChangesAsync();
             await transaction.CommitAsync();
 

@@ -7,11 +7,30 @@ using QLBH.Settings;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllersWithViews();
+
 builder.Services.AddDbContext<QlbhContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 builder.Services.Configure<SmtpSettings>(builder.Configuration.GetSection("SmtpSettings"));
-builder.Services.AddScoped<IEmailService, SmtpEmailService>();
+
+builder.Services.Configure<AIChatSettings>(builder.Configuration.GetSection("AIChat"));
+builder.Services.PostConfigure<AIChatSettings>(options =>
+{
+    if (string.IsNullOrWhiteSpace(options.ApiKey))
+    {
+        options.ApiKey = builder.Configuration["OPENAI_API_KEY"] ?? string.Empty;
+    }
+
+    if (string.IsNullOrWhiteSpace(options.Model))
+    {
+        options.Model = "llama3.2";
+    }
+});
+
+builder.Services.AddHttpClient<IAIChatService, OpenAIChatService>(client =>
+{
+    client.Timeout = TimeSpan.FromSeconds(45);
+});
 
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options =>
@@ -37,6 +56,7 @@ if (!app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseRouting();
+
 app.UseAuthentication();
 app.UseAuthorization();
 

@@ -1,97 +1,121 @@
+@using QLBH.Utils
 @model QLBH.Models.CustomOrderRequest
 
 @{
     ViewData["Title"] = "Chi tiết yêu cầu";
-
-    string GetStatusText(string status) => (status ?? "").ToLower() switch
-    {
-        "new" => "Mới tiếp nhận",
-        "consulting" => "Đang tư vấn",
-        "quoted" => "Đã báo giá",
-        "approved" => "Đã chốt",
-        "cancelled" => "Đã hủy",
-        _ => "Đang xử lý"
-    };
+    var images = CustomOrderUiHelper.ParseReferenceImageUrls(Model.ReferenceImageUrls);
 }
 
 <div class="container py-5">
     <div class="row justify-content-center">
-        <div class="col-xl-9">
+        <div class="col-xl-10">
             <div class="card shadow-sm border-0 rounded-4 mb-4">
                 <div class="card-body p-4 p-lg-5">
-                    <div class="d-flex flex-wrap justify-content-between gap-3 align-items-start">
+                    <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-4">
                         <div>
                             <div class="text-muted small mb-2">Mã yêu cầu</div>
                             <h1 class="h3 fw-bold mb-1">@Model.RequestCode</h1>
                             <div class="text-muted">@Model.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</div>
                         </div>
-
-                        <div>
-                            <span class="badge bg-dark rounded-pill px-3 py-2">
-                                @GetStatusText(Model.Status)
-                            </span>
+                        <div class="d-flex gap-2 flex-wrap">
+                            <span class="badge bg-dark">Đặt riêng</span>
+                            <span class="badge @CustomOrderUiHelper.StatusBadgeClass(Model.Status)">@CustomOrderUiHelper.StatusLabel(Model.Status)</span>
                         </div>
+                    </div>
+
+                    <div class="row g-4">
+                        <div class="col-lg-6">
+                            <div class="border rounded-4 p-3 h-100">
+                                <h2 class="h6 mb-3">Thông tin khách hàng</h2>
+                                <div class="small text-muted mb-1">Họ tên</div>
+                                <div class="mb-3">@Model.CustomerName</div>
+                                <div class="small text-muted mb-1">Email</div>
+                                <div class="mb-3">@Model.Email</div>
+                                <div class="small text-muted mb-1">Số điện thoại</div>
+                                <div>@Model.Phone</div>
+                            </div>
+                        </div>
+
+                        <div class="col-lg-6">
+                            <div class="border rounded-4 p-3 h-100">
+                                <h2 class="h6 mb-3">Thông tin yêu cầu</h2>
+                                <div class="small text-muted mb-1">Sản phẩm mong muốn</div>
+                                <div class="mb-2">@Model.RequestedProductName</div>
+                                <div class="small text-muted mb-1">Loại gỗ</div>
+                                <div class="mb-2">@(string.IsNullOrWhiteSpace(Model.WoodType) ? "Chưa cung cấp" : Model.WoodType)</div>
+                                <div class="small text-muted mb-1">Kích thước</div>
+                                <div class="mb-2">@(string.IsNullOrWhiteSpace(Model.Dimensions) ? "Chưa cung cấp" : Model.Dimensions)</div>
+                                <div class="small text-muted mb-1">Số lượng</div>
+                                <div class="mb-2">@Model.Quantity</div>
+                                <div class="small text-muted mb-1">Ngân sách dự kiến</div>
+                                <div class="mb-2">@(Model.EstimatedBudget.HasValue ? $"{Model.EstimatedBudget.Value:N0} VND" : "Chưa cung cấp")</div>
+                                <div class="small text-muted mb-1">Ngày mong muốn nhận</div>
+                                <div>@(Model.DesiredDeliveryDate.HasValue ? Model.DesiredDeliveryDate.Value.ToString("dd/MM/yyyy") : "Chưa cung cấp")</div>
+                            </div>
+                        </div>
+
+                        <div class="col-12">
+                            <div class="border rounded-4 p-3">
+                                <h2 class="h6 mb-3">Mô tả chi tiết</h2>
+                                <div style="white-space:pre-line;">@Model.Description</div>
+                            </div>
+                        </div>
+
+                        @if (Model.Product != null)
+                        {
+                            <div class="col-12">
+                                <div class="border rounded-4 p-3 bg-light">
+                                    <h2 class="h6 mb-2">Sản phẩm tham chiếu trong hệ thống</h2>
+                                    <div class="d-flex flex-wrap gap-2 align-items-center justify-content-between">
+                                        <div>
+                                            <div class="fw-semibold">@Model.Product.Name</div>
+                                            <div class="text-muted small">Giá tham khảo: @Model.Product.Price.ToString("N0") VND</div>
+                                        </div>
+                                        <a asp-controller="Product" asp-action="Details" asp-route-id="@Model.Product.Id" class="btn btn-outline-dark btn-sm">Xem sản phẩm</a>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+
+                        <div class="col-12">
+                            <div class="border rounded-4 p-3">
+                                <h2 class="h6 mb-3">Ảnh tham khảo</h2>
+                                @if (images.Any())
+                                {
+                                    <div class="row g-3">
+                                        @foreach (var image in images)
+                                        {
+                                            <div class="col-sm-6 col-lg-4">
+                                                <a href="@image" target="_blank" class="text-decoration-none">
+                                                    <img src="@image" class="img-fluid rounded-4 border" alt="Ảnh tham khảo" style="width:100%;height:220px;object-fit:cover;" />
+                                                </a>
+                                            </div>
+                                        }
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div class="text-muted">Chưa có ảnh tham khảo.</div>
+                                }
+                            </div>
+                        </div>
+
+                        @if (!string.IsNullOrWhiteSpace(Model.AdminNote))
+                        {
+                            <div class="col-12">
+                                <div class="alert alert-info border-0 rounded-4 mb-0">
+                                    <div class="fw-semibold mb-1">Ghi chú từ cửa hàng</div>
+                                    <div style="white-space:pre-line;">@Model.AdminNote</div>
+                                </div>
+                            </div>
+                        }
                     </div>
                 </div>
             </div>
 
-            <div class="row g-4">
-                <div class="col-lg-7">
-                    <div class="card shadow-sm border-0 rounded-4 h-100">
-                        <div class="card-body p-4">
-                            <h2 class="h5 fw-bold mb-3">Thông tin yêu cầu</h2>
-
-                            <div class="mb-3"><strong>Khách hàng:</strong> @Model.CustomerName</div>
-                            <div class="mb-3"><strong>Email:</strong> @Model.Email</div>
-                            <div class="mb-3"><strong>Số điện thoại:</strong> @Model.Phone</div>
-                            <div class="mb-3"><strong>Sản phẩm mong muốn:</strong> @Model.RequestedProductName</div>
-                            <div class="mb-3"><strong>Loại gỗ:</strong> @(string.IsNullOrWhiteSpace(Model.WoodType) ? "Chưa cung cấp" : Model.WoodType)</div>
-                            <div class="mb-3"><strong>Kích thước:</strong> @(string.IsNullOrWhiteSpace(Model.Dimensions) ? "Chưa cung cấp" : Model.Dimensions)</div>
-                            <div class="mb-3"><strong>Số lượng:</strong> @Model.Quantity</div>
-                            <div class="mb-3"><strong>Ngân sách:</strong> @(Model.EstimatedBudget.HasValue ? Model.EstimatedBudget.Value.ToString("N0") + " đ" : "Chưa cung cấp")</div>
-                            <div class="mb-3"><strong>Ngày mong muốn nhận:</strong> @(Model.DesiredDeliveryDate?.ToString("dd/MM/yyyy") ?? "Chưa cung cấp")</div>
-
-                            <div class="mb-0">
-                                <strong>Mô tả chi tiết:</strong>
-                                <div class="mt-2 text-muted">@Model.Description</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="col-lg-5">
-                    <div class="card shadow-sm border-0 rounded-4 mb-4">
-                        <div class="card-body p-4">
-                            <h2 class="h5 fw-bold mb-3">Tiến độ xử lý</h2>
-                            <p class="mb-0 text-muted">
-                                Trạng thái hiện tại: <strong>@GetStatusText(Model.Status)</strong>
-                            </p>
-                        </div>
-                    </div>
-
-                    <div class="card shadow-sm border-0 rounded-4">
-                        <div class="card-body p-4">
-                            <h2 class="h5 fw-bold mb-3">Ghi chú từ cửa hàng</h2>
-                            <div class="text-muted">
-                                @(string.IsNullOrWhiteSpace(Model.AdminNote) ? "Chưa có ghi chú từ cửa hàng." : Model.AdminNote)
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="d-flex gap-2 flex-wrap mt-4">
-                <a asp-controller="CustomOrder"
-                   asp-action="Lookup"
-                   class="btn btn-outline-secondary rounded-pill px-4">
-                    Tra cứu yêu cầu khác
-                </a>
-
-                <a asp-controller="Home"
-                   asp-action="Index"
-                   class="btn btn-dark rounded-pill px-4">
-                    Về trang chủ
-                </a>
+            <div class="d-flex gap-2 flex-wrap">
+                <a asp-controller="Order" asp-action="Index" class="btn btn-dark">Về Đơn của tôi</a>
+                <a asp-controller="CustomOrder" asp-action="Lookup" class="btn btn-outline-secondary">Tra cứu bằng mã</a>
             </div>
         </div>
     </div>

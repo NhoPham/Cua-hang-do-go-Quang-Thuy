@@ -1,4 +1,5 @@
 @model QLBH.ViewModels.CustomOrderRequestViewModel
+
 @{
     ViewData["Title"] = "Đặt hàng theo yêu cầu";
 }
@@ -10,68 +11,106 @@
                 <div class="card-body p-4 p-lg-5">
                     <h1 class="h3 mb-2">Đặt hàng theo yêu cầu</h1>
                     <p class="text-muted mb-4">
-                        Gửi mô tả sản phẩm bạn muốn làm riêng. Cửa hàng sẽ liên hệ tư vấn và báo giá.
+                        Gửi mô tả sản phẩm bạn muốn làm riêng. Cửa hàng sẽ liên hệ tư vấn, báo giá và cập nhật trạng thái ngay trong mục <strong>Đơn của tôi</strong>.
                     </p>
 
-                    <form asp-action="Create" method="post">
+                    <form asp-action="Create" method="post" enctype="multipart/form-data" class="row g-3">
                         @Html.AntiForgeryToken()
                         <input asp-for="ProductId" type="hidden" />
-                        <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+                        <input asp-for="ProductName" type="hidden" />
+                        <input asp-for="ProductImage" type="hidden" />
 
-                        <div class="row g-3">
-                            <div class="col-md-6">
-                                <label asp-for="CustomerName" class="form-label"></label>
-                                <input asp-for="CustomerName" class="form-control" />
-                                <span asp-validation-for="CustomerName" class="text-danger"></span>
-                            </div>
-                            <div class="col-md-6">
-                                <label asp-for="Phone" class="form-label"></label>
-                                <input asp-for="Phone" class="form-control" />
-                                <span asp-validation-for="Phone" class="text-danger"></span>
-                            </div>
-                            <div class="col-md-6">
-                                <label asp-for="Email" class="form-label"></label>
-                                <input asp-for="Email" class="form-control" />
-                                <span asp-validation-for="Email" class="text-danger"></span>
-                            </div>
-                            <div class="col-md-6">
-                                <label asp-for="RequestedProductName" class="form-label"></label>
-                                <input asp-for="RequestedProductName" class="form-control" />
-                                <span asp-validation-for="RequestedProductName" class="text-danger"></span>
-                            </div>
-                            <div class="col-md-6">
-                                <label asp-for="WoodType" class="form-label"></label>
-                                <input asp-for="WoodType" class="form-control" placeholder="Ví dụ: gỗ sồi, óc chó..." />
-                            </div>
-                            <div class="col-md-6">
-                                <label asp-for="Dimensions" class="form-label"></label>
-                                <input asp-for="Dimensions" class="form-control" placeholder="Ví dụ: 160x80x75 cm" />
-                            </div>
-                            <div class="col-md-4">
-                                <label asp-for="Quantity" class="form-label"></label>
-                                <input asp-for="Quantity" class="form-control" />
-                                <span asp-validation-for="Quantity" class="text-danger"></span>
-                            </div>
-                            <div class="col-md-4">
-                                <label asp-for="EstimatedBudget" class="form-label"></label>
-                                <input asp-for="EstimatedBudget" class="form-control" />
-                            </div>
-                            <div class="col-md-4">
-                                <label asp-for="DesiredDeliveryDate" class="form-label"></label>
-                                <input asp-for="DesiredDeliveryDate" type="date" class="form-control" />
-                            </div>
+                        @if (!string.IsNullOrWhiteSpace(Model.ProductName))
+                        {
                             <div class="col-12">
-                                <label asp-for="ReferenceImageUrls" class="form-label"></label>
-                                <textarea asp-for="ReferenceImageUrls" class="form-control" rows="2"></textarea>
+                                <div class="border rounded-4 p-3 bg-light d-flex gap-3 align-items-center">
+                                    @if (!string.IsNullOrWhiteSpace(Model.ProductImage))
+                                    {
+                                        <img src="@Model.ProductImage" alt="@Model.ProductName" style="width:88px;height:88px;object-fit:cover;border-radius:16px;" />
+                                    }
+                                    <div>
+                                        <div class="text-muted small">Mẫu tham chiếu</div>
+                                        <div class="fw-semibold">@Model.ProductName</div>
+                                        <div class="small text-muted">Bạn đang tạo yêu cầu riêng dựa trên sản phẩm này.</div>
+                                    </div>
+                                </div>
                             </div>
-                            <div class="col-12">
-                                <label asp-for="Description" class="form-label"></label>
-                                <textarea asp-for="Description" class="form-control" rows="6" placeholder="Mô tả chi tiết kiểu dáng, màu sắc, công năng, yêu cầu đặc biệt..."></textarea>
-                                <span asp-validation-for="Description" class="text-danger"></span>
-                            </div>
+                        }
+
+                        <div class="col-md-6">
+                            <label asp-for="CustomerName" class="form-label"></label>
+                            <input asp-for="CustomerName" class="form-control" />
+                            <span asp-validation-for="CustomerName" class="text-danger"></span>
                         </div>
 
-                        <div class="d-flex gap-2 mt-4">
+                        <div class="col-md-6">
+                            <label asp-for="Phone" class="form-label"></label>
+                            <input asp-for="Phone" class="form-control" />
+                            <span asp-validation-for="Phone" class="text-danger"></span>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label asp-for="Email" class="form-label"></label>
+                            <input asp-for="Email" class="form-control" />
+                            <span asp-validation-for="Email" class="text-danger"></span>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label asp-for="RequestedProductName" class="form-label"></label>
+                            <input asp-for="RequestedProductName" class="form-control" />
+                            <span asp-validation-for="RequestedProductName" class="text-danger"></span>
+                        </div>
+
+                        <div class="col-md-4">
+                            <label asp-for="WoodType" class="form-label"></label>
+                            <input asp-for="WoodType" class="form-control" placeholder="Ví dụ: gỗ sồi, óc chó..." />
+                            <span asp-validation-for="WoodType" class="text-danger"></span>
+                        </div>
+
+                        <div class="col-md-4">
+                            <label asp-for="Dimensions" class="form-label"></label>
+                            <input asp-for="Dimensions" class="form-control" placeholder="Ví dụ: 160x80x75 cm" />
+                            <span asp-validation-for="Dimensions" class="text-danger"></span>
+                        </div>
+
+                        <div class="col-md-4">
+                            <label asp-for="Quantity" class="form-label"></label>
+                            <input asp-for="Quantity" class="form-control" type="number" min="1" />
+                            <span asp-validation-for="Quantity" class="text-danger"></span>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label asp-for="EstimatedBudget" class="form-label"></label>
+                            <input asp-for="EstimatedBudget" class="form-control" type="number" step="1000" min="0" />
+                            <span asp-validation-for="EstimatedBudget" class="text-danger"></span>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label asp-for="DesiredDeliveryDate" class="form-label"></label>
+                            <input asp-for="DesiredDeliveryDate" class="form-control" type="date" />
+                            <span asp-validation-for="DesiredDeliveryDate" class="text-danger"></span>
+                        </div>
+
+                        <div class="col-12">
+                            <label asp-for="Description" class="form-label"></label>
+                            <textarea asp-for="Description" class="form-control" rows="5" placeholder="Mô tả kiểu dáng, màu sắc, nhu cầu sử dụng, ưu tiên chất liệu..."></textarea>
+                            <span asp-validation-for="Description" class="text-danger"></span>
+                        </div>
+
+                        <div class="col-12">
+                            <label asp-for="ReferenceImages" class="form-label"></label>
+                            <input asp-for="ReferenceImages" class="form-control" type="file" multiple accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" />
+                            <div class="form-text">Tối đa 5 ảnh, mỗi ảnh không quá 5MB.</div>
+                            <span asp-validation-for="ReferenceImages" class="text-danger"></span>
+                        </div>
+
+                        <div class="col-12">
+                            <label asp-for="ReferenceImageUrls" class="form-label"></label>
+                            <textarea asp-for="ReferenceImageUrls" class="form-control" rows="3" placeholder="Dán thêm link ảnh tham khảo nếu có"></textarea>
+                            <span asp-validation-for="ReferenceImageUrls" class="text-danger"></span>
+                        </div>
+
+                        <div class="col-12 d-flex gap-2 flex-wrap pt-2">
                             <button type="submit" class="btn btn-dark px-4">Gửi yêu cầu</button>
                             <a asp-controller="Product" asp-action="Index" class="btn btn-outline-secondary">Quay lại sản phẩm</a>
                         </div>
@@ -83,17 +122,18 @@
         <div class="col-lg-4">
             <div class="card border-0 shadow-sm rounded-4 h-100">
                 <div class="card-body p-4">
-                    <h2 class="h5 mb-3">Mẫu tham chiếu</h2>
-                    @if (!string.IsNullOrWhiteSpace(Model.ProductName))
-                    {
-                        <img src="@Model.ProductImage" alt="@Model.ProductName" class="img-fluid rounded-4 mb-3" />
-                        <div class="fw-semibold">@Model.ProductName</div>
-                        <p class="text-muted small mb-0">Bạn đang gửi yêu cầu dựa trên sản phẩm tham chiếu này.</p>
-                    }
-                    else
-                    {
-                        <p class="text-muted mb-0">Bạn có thể gửi yêu cầu hoàn toàn mới, không cần chọn sẵn một sản phẩm.</p>
-                    }
+                    <h2 class="h5 mb-3">Quy trình xử lý</h2>
+                    <ol class="text-muted ps-3 mb-0">
+                        <li class="mb-2">Bạn gửi yêu cầu và ảnh tham khảo.</li>
+                        <li class="mb-2">Cửa hàng tiếp nhận và tư vấn.</li>
+                        <li class="mb-2">Nhân viên cập nhật báo giá, tiến độ và trạng thái.</li>
+                        <li class="mb-2">Bạn theo dõi ngay tại mục <strong>Đơn của tôi</strong>.</li>
+                    </ol>
+
+                    <hr />
+                    <div class="small text-muted">
+                        Bạn cũng có thể dùng nút <strong>Tư vấn AI</strong> ở góc màn hình để hỏi nhanh về kích thước, chất liệu hoặc kiểu sản phẩm phù hợp trước khi gửi yêu cầu.
+                    </div>
                 </div>
             </div>
         </div>

@@ -11,10 +11,12 @@ namespace QLBH.Controllers;
 public class CustomOrderController : Controller
 {
     private readonly QlbhContext _context;
+    private readonly IWebHostEnvironment _environment;
 
-    public CustomOrderController(QlbhContext context)
+    public CustomOrderController(QlbhContext context, IWebHostEnvironment environment)
     {
         _context = context;
+        _environment = environment;
     }
 
     [HttpGet]
@@ -64,18 +66,24 @@ public class CustomOrderController : Controller
             }
         }
 
+        ValidateReferenceImages(model.ReferenceImages);
+
         if (!ModelState.IsValid)
         {
             return View(model);
         }
 
+        var requestCode = await GenerateRequestCodeAsync();
+        var uploadedPaths = await SaveReferenceImagesAsync(requestCode, model.ReferenceImages, HttpContext.RequestAborted);
+        var mergedImages = MergeReferenceImages(model.ReferenceImageUrls, uploadedPaths);
+
         var request = new CustomOrderRequest
         {
-            RequestCode = await GenerateRequestCodeAsync(),
+            RequestCode = requestCode,
             UserId = GetCurrentUserId(),
             ProductId = model.ProductId,
             CustomerName = model.CustomerName.Trim(),
-            Email = model.Email.Trim().ToLower(),
+            Email = model.Email.Trim().ToLowerInvariant(),
             Phone = model.Phone.Trim(),
             RequestedProductName = model.RequestedProductName.Trim(),
             WoodType = string.IsNullOrWhiteSpace(model.WoodType) ? null : model.WoodType.Trim(),
@@ -84,12 +92,12 @@ public class CustomOrderController : Controller
             EstimatedBudget = model.EstimatedBudget,
             DesiredDeliveryDate = model.DesiredDeliveryDate,
             Description = model.Description.Trim(),
-            ReferenceImageUrls = string.IsNullOrWhiteSpace(model.ReferenceImageUrls) ? null : model.ReferenceImageUrls.Trim(),
-            Status = "new",
+            ReferenceImageUrls = mergedImages,
+            Status = CustomOrderStatuses.New,
             CreatedAt = DateTime.UtcNow
         };
 
-        _context.Add(request);
+        _context.CustomOrderRequests.Add(request);
         await _context.SaveChangesAsync();
 
         return RedirectToAction(nameof(Success), new { code = request.RequestCode });
@@ -116,7 +124,7 @@ public class CustomOrderController : Controller
     public async Task<IActionResult> Lookup(string code, string email)
     {
         code = (code ?? string.Empty).Trim();
-        email = (email ?? string.Empty).Trim().ToLower();
+        email = (email ?? string.Empty).Trim().ToLowerInvariant();
 
         if (string.IsNullOrWhiteSpace(code) || string.IsNullOrWhiteSpace(email))
         {
@@ -142,7 +150,7 @@ public class CustomOrderController : Controller
     public async Task<IActionResult> Details(string code, string email)
     {
         code = (code ?? string.Empty).Trim();
-        email = (email ?? string.Empty).Trim().ToLower();
+        email = (email ?? string.Empty).Trim().ToLowerInvariant();
 
         if (string.IsNullOrWhiteSpace(code) || string.IsNullOrWhiteSpace(email))
         {
@@ -163,31 +171,58 @@ public class CustomOrderController : Controller
         return View(request);
     }
 
+    [Authorize]
+    [HttpGet]
+    public async Task<IActionResult> MyDetails(int id)
+    {
+        var request = await _context.CustomOrderRequests
+            .Include(x => x.Product)
+            .Include(x => x.User)
+            .FirstOrDefaultAsync(x => x.Id == id);
+
+        if (request == null)
+        {
+            return NotFound();
+        }
+
+        var userId = GetCurrentUserId();
+        if (!User.IsInRole("admin") && (!userId.HasValue || request.UserId != userId.Value))
+        {
+            return Forbid();
+        }
+
+        return View("Details", request);
+    }
+
     [Authorize(Roles = "admin")]
     [HttpGet]
     public async Task<IActionResult> Admin(string? status, string? keyword)
     {
+        var normalizedStatus = string.IsNullOrWhiteSpace(status)
+            ? null
+            : CustomOrderUiHelper.NormalizeStatus(status);
+
         var query = _context.CustomOrderRequests
             .Include(x => x.Product)
             .Include(x => x.User)
             .AsQueryable();
 
-        if (!string.IsNullOrWhiteSpace(status))
+        if (!string.IsNullOrWhiteSpace(normalizedStatus))
         {
-            query = query.Where(x => x.Status == status.Trim().ToLower());
+            query = query.Where(x => x.Status == normalizedStatus);
         }
 
         if (!string.IsNullOrWhiteSpace(keyword))
         {
-            var normalized = keyword.Trim().ToLower();
+            var normalizedKeyword = keyword.Trim().ToLowerInvariant();
             query = query.Where(x =>
-                x.RequestCode.ToLower().Contains(normalized) ||
-                x.CustomerName.ToLower().Contains(normalized) ||
-                x.Email.ToLower().Contains(normalized) ||
-                x.RequestedProductName.ToLower().Contains(normalized));
+                x.RequestCode.ToLower().Contains(normalizedKeyword) ||
+                x.CustomerName.ToLower().Contains(normalizedKeyword) ||
+                x.Email.ToLower().Contains(normalizedKeyword) ||
+                x.RequestedProductName.ToLower().Contains(normalizedKeyword));
         }
 
-        ViewBag.Status = status;
+        ViewBag.Status = normalizedStatus;
         ViewBag.Keyword = keyword;
 
         var data = await query
@@ -202,14 +237,7 @@ public class CustomOrderController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> UpdateStatus(int id, string status, string? adminNote)
     {
-        var allowedStatuses = new[] { "new", "consulting", "quoted", "approved", "cancelled" };
-        status = (status ?? string.Empty).Trim().ToLower();
-
-        if (!allowedStatuses.Contains(status))
-        {
-            TempData["ErrorMessage"] = "Trạng thái yêu cầu không hợp lệ.";
-            return RedirectToAction(nameof(Admin));
-        }
+        status = CustomOrderUiHelper.NormalizeStatus(status);
 
         var request = await _context.CustomOrderRequests.FirstOrDefaultAsync(x => x.Id == id);
         if (request == null)
@@ -221,11 +249,10 @@ public class CustomOrderController : Controller
         request.Status = status;
         request.AdminNote = string.IsNullOrWhiteSpace(adminNote) ? null : adminNote.Trim();
         request.UpdatedAt = DateTime.UtcNow;
-
         await _context.SaveChangesAsync();
-        TempData["SuccessMessage"] = $"Đã cập nhật yêu cầu {request.RequestCode}.";
 
-        return RedirectToAction(nameof(Admin));
+        TempData["SuccessMessage"] = $"Đã cập nhật yêu cầu {request.RequestCode}.";
+        return RedirectToAction(nameof(Admin), new { status });
     }
 
     private int? GetCurrentUserId()
@@ -245,5 +272,76 @@ public class CustomOrderController : Controller
                 return code;
             }
         }
+    }
+
+    private void ValidateReferenceImages(IEnumerable<IFormFile>? files)
+    {
+        if (files == null)
+        {
+            return;
+        }
+
+        var allowedExtensions = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        {
+            ".jpg", ".jpeg", ".png", ".webp"
+        };
+
+        var fileList = files.Where(x => x != null && x.Length > 0).ToList();
+        if (fileList.Count > 5)
+        {
+            ModelState.AddModelError(nameof(CustomOrderRequestViewModel.ReferenceImages), "Bạn chỉ được tải tối đa 5 ảnh.");
+        }
+
+        foreach (var file in fileList)
+        {
+            var extension = Path.GetExtension(file.FileName);
+            if (!allowedExtensions.Contains(extension))
+            {
+                ModelState.AddModelError(nameof(CustomOrderRequestViewModel.ReferenceImages), $"Định dạng {extension} không được hỗ trợ.");
+            }
+
+            if (file.Length > 5 * 1024 * 1024)
+            {
+                ModelState.AddModelError(nameof(CustomOrderRequestViewModel.ReferenceImages), $"Ảnh {file.FileName} vượt quá 5MB.");
+            }
+        }
+    }
+
+    private async Task<List<string>> SaveReferenceImagesAsync(string requestCode, IEnumerable<IFormFile>? files, CancellationToken cancellationToken)
+    {
+        var result = new List<string>();
+        if (files == null)
+        {
+            return result;
+        }
+
+        var uploadFolder = Path.Combine(_environment.WebRootPath, "uploads", "custom-orders", requestCode);
+        Directory.CreateDirectory(uploadFolder);
+
+        var index = 0;
+        foreach (var file in files.Where(x => x.Length > 0))
+        {
+            index++;
+            var extension = Path.GetExtension(file.FileName);
+            var safeName = $"{DateTime.UtcNow:yyyyMMddHHmmssfff}_{index}{extension}";
+            var filePath = Path.Combine(uploadFolder, safeName);
+
+            await using var stream = new FileStream(filePath, FileMode.Create);
+            await file.CopyToAsync(stream, cancellationToken);
+
+            result.Add($"/uploads/custom-orders/{requestCode}/{safeName}");
+        }
+
+        return result;
+    }
+
+    private static string? MergeReferenceImages(string? rawUrls, IEnumerable<string> uploadedPaths)
+    {
+        var allImages = CustomOrderUiHelper.ParseReferenceImageUrls(rawUrls)
+            .Concat(uploadedPaths)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        return allImages.Any() ? string.Join(Environment.NewLine, allImages) : null;
     }
 }
