@@ -70,6 +70,12 @@ builder.Services.AddHttpClient<IChatAssistantService, ChatAssistantService>(clie
     client.Timeout = TimeSpan.FromSeconds(45);
 });
 
+builder.Services.AddHttpClient<ICommunityNewsService, CommunityNewsService>(client =>
+{
+    client.Timeout = TimeSpan.FromSeconds(20);
+});
+
+builder.Services.AddScoped<ICommunityFeedService, CommunityFeedService>();
 builder.Services.AddScoped<IEmailService, SmtpEmailService>();
 
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)

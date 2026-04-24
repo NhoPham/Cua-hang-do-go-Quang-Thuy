@@ -1,0 +1,927 @@
+@model QLBH.ViewModels.CommunityFeedPageViewModel
+
+@{
+    ViewData["Title"] = "Cộng đồng đồ gỗ";
+
+    var currentFilter = string.IsNullOrWhiteSpace(Model.Filter)
+        ? "all"
+        : Model.Filter.Trim().ToLowerInvariant();
+
+    var searchText = Model.Search ?? string.Empty;
+
+    string StarText(int? rating)
+    {
+        if (!rating.HasValue)
+        {
+            return string.Empty;
+        }
+
+        var value = Math.Clamp(rating.Value, 1, 5);
+        return new string('★', value) + new string('☆', 5 - value);
+    }
+
+    string AvatarLetter(string? name)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            return "Q";
+        }
+
+        return name.Trim()[0].ToString().ToUpperInvariant();
+    }
+}
+
+<style>
+    .community-page {
+        max-width: 1180px;
+        margin: 0 auto;
+        padding: 30px 16px 56px;
+    }
+
+    .community-shell {
+        max-width: 820px;
+        margin: 0 auto;
+    }
+
+    .community-hero {
+        max-width: 900px;
+        margin: 0 auto 18px;
+        border-radius: 20px;
+        padding: 15px 0px;
+        background:
+            radial-gradient(circle at top left, rgba(255, 255, 255, .14), transparent 34%),
+            linear-gradient(135deg, #4b2e1f, #8b5a35);
+        color: #fff;
+        box-shadow: 0 20px 48px rgba(35, 20, 10, .20);
+        text-align: center;
+    }
+
+    .community-hero-kicker {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 7px 13px;
+        margin-bottom: 12px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, .14);
+        color: rgba(255, 255, 255, .92);
+        font-size: 13px;
+        font-weight: 700;
+    }
+
+    .community-hero h1 {
+        font-size: 32px;
+        line-height: 1.18;
+        font-weight: 900;
+        margin: 0 0 9px;
+        letter-spacing: -.4px;
+    }
+
+    .community-hero p {
+        max-width: 720px;
+        margin: 0 auto;
+        opacity: .94;
+        font-size: 15px;
+        line-height: 1.6;
+    }
+
+    .review-entry-wrap {
+        display: flex;
+        justify-content: center;
+        margin: 0 auto 14px;
+    }
+
+    .review-bubble-btn {
+        border: 0;
+        width: min(100%, 520px);
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 13px 16px;
+        border-radius: 999px;
+        background: #fff;
+        color: #4b2e1f;
+        text-decoration: none;
+        box-shadow: 0 14px 32px rgba(60, 38, 18, .13);
+        border: 1px solid rgba(111, 67, 40, .13);
+        cursor: pointer;
+        transition: .2s ease;
+        text-align: left;
+    }
+
+    .review-bubble-btn:hover {
+        color: #4b2e1f;
+        transform: translateY(-2px);
+        box-shadow: 0 18px 38px rgba(60, 38, 18, .18);
+    }
+
+    .review-bubble-icon {
+        width: 42px;
+        height: 42px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #6f4328, #b8794a);
+        color: #fff;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        font-weight: 900;
+        flex-shrink: 0;
+    }
+
+    .review-bubble-btn strong {
+        display: block;
+        font-size: 16px;
+        line-height: 1.2;
+    }
+
+    .review-bubble-btn small {
+        display: block;
+        margin-top: 3px;
+        color: #8a6b55;
+        font-size: 13px;
+        line-height: 1.25;
+    }
+
+    .community-toolbar {
+        max-width: 820px;
+        margin: 0 auto 16px;
+        display: grid;
+        gap: 12px;
+    }
+
+    .community-search {
+        background: #fff;
+        border: 1px solid rgba(111, 67, 40, .12);
+        border-radius: 999px;
+        padding: 8px;
+        box-shadow: 0 10px 24px rgba(60, 38, 18, .08);
+        display: flex;
+        gap: 8px;
+        align-items: center;
+    }
+
+    .community-search input {
+        flex: 1;
+        min-width: 0;
+        border: 0;
+        outline: none;
+        padding: 10px 12px;
+        color: #3f2a1d;
+        background: transparent;
+    }
+
+    .community-tabs {
+        display: flex;
+        justify-content: center;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+
+    .community-tab {
+        text-decoration: none;
+        color: #5b3b26;
+        background: #fff;
+        border: 1px solid rgba(111, 67, 40, .12);
+        padding: 10px 15px;
+        border-radius: 999px;
+        font-weight: 800;
+        font-size: 14px;
+        box-shadow: 0 8px 18px rgba(60, 38, 18, .06);
+        transition: .18s ease;
+    }
+
+    .community-tab:hover {
+        color: #4b2e1f;
+        transform: translateY(-1px);
+    }
+
+    .community-tab.active {
+        background: #6f4328;
+        color: #fff;
+        border-color: #6f4328;
+    }
+
+    .community-card {
+        background: #fff;
+        border: 1px solid rgba(110, 78, 45, .12);
+        border-radius: 24px;
+        box-shadow: 0 14px 34px rgba(60, 38, 18, .08);
+        overflow: hidden;
+        margin-bottom: 18px;
+    }
+
+    .community-card-body {
+        padding: 19px;
+    }
+
+    .community-btn {
+        border: 0;
+        border-radius: 999px;
+        padding: 10px 16px;
+        font-weight: 800;
+        cursor: pointer;
+        background: #6f4328;
+        color: #fff;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        line-height: 1;
+        transition: .18s ease;
+    }
+
+    .community-btn:hover {
+        color: #fff;
+        transform: translateY(-1px);
+        box-shadow: 0 10px 20px rgba(111, 67, 40, .20);
+    }
+
+    .community-btn.secondary {
+        background: #f4eee8;
+        color: #5b3b26;
+        box-shadow: none;
+    }
+
+    .community-btn.secondary:hover {
+        color: #5b3b26;
+        background: #efe3d8;
+    }
+
+    .community-btn.danger {
+        background: #b54747;
+        color: #fff;
+    }
+
+    .feed-header {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        margin-bottom: 12px;
+    }
+
+    .feed-avatar {
+        width: 46px;
+        height: 46px;
+        border-radius: 50%;
+        background: #f0e4d8;
+        color: #6f4328;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 900;
+        flex-shrink: 0;
+    }
+
+    .feed-author {
+        color: #2f2118;
+        font-weight: 900;
+    }
+
+    .feed-meta {
+        color: #806653;
+        font-size: 13px;
+        margin-top: 2px;
+    }
+
+    .feed-badge {
+        display: inline-block;
+        padding: 5px 10px;
+        border-radius: 999px;
+        background: #f4eee8;
+        color: #6f4328;
+        font-weight: 900;
+        font-size: 12px;
+        margin-bottom: 10px;
+    }
+
+    .feed-title {
+        margin: 0 0 8px;
+        font-size: 21px;
+        line-height: 1.32;
+        color: #2f2118;
+        font-weight: 900;
+    }
+
+    .feed-content {
+        color: #4f4036;
+        line-height: 1.7;
+        white-space: pre-line;
+        font-size: 15px;
+    }
+
+    .feed-rating {
+        color: #b06a21;
+        font-size: 18px;
+        letter-spacing: 1px;
+        margin: 6px 0 10px;
+    }
+
+    .feed-images {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+        margin-top: 13px;
+    }
+
+    .feed-images img {
+        width: 100%;
+        aspect-ratio: 16 / 10;
+        object-fit: cover;
+        border-radius: 18px;
+        border: 1px solid rgba(111, 67, 40, .08);
+    }
+
+    .feed-actions {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        padding-top: 13px;
+        margin-top: 14px;
+        border-top: 1px solid #f0e7df;
+    }
+
+    .feed-actions form {
+        margin: 0;
+    }
+
+    .comment-list {
+        margin-top: 13px;
+        display: grid;
+        gap: 10px;
+    }
+
+    .comment-item {
+        background: #fbf8f5;
+        border: 1px solid rgba(111, 67, 40, .08);
+        border-radius: 17px;
+        padding: 10px 12px;
+    }
+
+    .comment-item.reply {
+        margin-left: 24px;
+    }
+
+    .comment-author {
+        font-weight: 900;
+        color: #3d2a1d;
+        font-size: 13px;
+    }
+
+    .comment-content {
+        margin-top: 3px;
+        color: #4f4036;
+        line-height: 1.55;
+    }
+
+    .comment-form {
+        display: flex;
+        gap: 8px;
+        margin-top: 13px;
+    }
+
+    .comment-form input {
+        flex: 1;
+        min-width: 0;
+        border: 1px solid #e8ded4;
+        border-radius: 999px;
+        padding: 11px 14px;
+        outline: none;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 36px 18px;
+        color: #806653;
+    }
+
+    .empty-state strong {
+        display: block;
+        color: #4b2e1f;
+        font-size: 18px;
+        margin-bottom: 5px;
+    }
+
+    .review-modal-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 5000;
+        background: rgba(23, 15, 10, .58);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        padding: 18px;
+    }
+
+    .review-modal-overlay.show {
+        display: flex;
+    }
+
+    .review-modal-card {
+        width: min(100%, 640px);
+        max-height: 92vh;
+        overflow-y: auto;
+        background: #fff;
+        border-radius: 26px;
+        box-shadow: 0 28px 80px rgba(0, 0, 0, .28);
+        padding: 20px;
+        animation: reviewPop .18s ease-out;
+    }
+
+    .review-modal-header {
+        display: flex;
+        justify-content: space-between;
+        gap: 16px;
+        align-items: flex-start;
+        margin-bottom: 16px;
+    }
+
+    .review-modal-header h2 {
+        margin: 0;
+        font-size: 23px;
+        color: #2f2118;
+        font-weight: 900;
+    }
+
+    .review-modal-header p {
+        margin: 5px 0 0;
+        color: #806653;
+        font-size: 14px;
+        line-height: 1.45;
+    }
+
+    .review-modal-close {
+        width: 38px;
+        height: 38px;
+        border-radius: 50%;
+        border: 0;
+        background: #f4eee8;
+        color: #5b3b26;
+        font-size: 25px;
+        line-height: 1;
+        cursor: pointer;
+        flex-shrink: 0;
+    }
+
+    .review-modal-row {
+        display: grid;
+        grid-template-columns: 1fr 130px;
+        gap: 12px;
+    }
+
+    .review-modal-field,
+    .review-modal-row label {
+        display: block;
+        margin-bottom: 12px;
+    }
+
+    .review-modal-field span,
+    .review-modal-row label span {
+        display: block;
+        font-weight: 800;
+        color: #4b2e1f;
+        margin-bottom: 6px;
+        font-size: 13px;
+    }
+
+    .review-modal-card input,
+    .review-modal-card select,
+    .review-modal-card textarea {
+        width: 100%;
+        border: 1px solid #e5ded6;
+        border-radius: 15px;
+        padding: 11px 12px;
+        outline: none;
+        font-size: 14px;
+        color: #3f2a1d;
+        background: #fff;
+    }
+
+    .review-modal-card textarea {
+        min-height: 105px;
+        resize: vertical;
+    }
+
+    .review-modal-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+        padding-top: 4px;
+    }
+
+    body.review-modal-open {
+        overflow: hidden;
+    }
+
+    @@keyframes reviewPop {
+        from {
+            opacity: 0;
+            transform: translateY(12px) scale(.98);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+    }
+
+    @@media (max-width: 900px) {
+        .community-page {
+            padding: 20px 10px 42px;
+        }
+
+        .community-hero {
+            padding: 24px 16px;
+            border-radius: 24px;
+        }
+
+        .community-hero h1 {
+            font-size: 26px;
+        }
+
+        .community-shell {
+            max-width: 100%;
+        }
+    }
+
+    @@media (max-width: 640px) {
+        .review-bubble-btn {
+            border-radius: 22px;
+        }
+
+        .community-search {
+            border-radius: 22px;
+            align-items: stretch;
+            flex-direction: column;
+        }
+
+        .community-search input {
+            width: 100%;
+        }
+
+        .community-search button {
+            width: 100%;
+        }
+
+        .review-modal-row {
+            grid-template-columns: 1fr;
+        }
+
+        .review-modal-card {
+            border-radius: 22px;
+            padding: 16px;
+        }
+
+        .review-modal-actions {
+            flex-direction: column-reverse;
+        }
+
+        .review-modal-actions .community-btn {
+            width: 100%;
+        }
+
+        .feed-images {
+            grid-template-columns: 1fr;
+        }
+
+        .comment-form {
+            align-items: stretch;
+            flex-direction: column;
+        }
+
+        .comment-form .community-btn {
+            width: 100%;
+        }
+    }
+</style>
+
+<div class="community-page">
+    <section class="community-hero">
+        <div class="community-hero-kicker">🌿 Bảng tin khách hàng</div>
+        <h1>Cộng đồng Đồ Gỗ Quảng Thủy</h1>
+        <p>
+            Nơi khách hàng đọc tin tức mới về gỗ, chia sẻ trải nghiệm mua sản phẩm,
+            đăng ảnh thực tế, bình luận và tương tác với nhau như một bảng tin cộng đồng.
+        </p>
+    </section>
+
+    <div class="community-shell">
+        <div class="review-entry-wrap">
+            @if (Model.IsAuthenticated)
+            {
+                <button type="button" class="review-bubble-btn" id="openReviewModalBtn">
+                    <span class="review-bubble-icon">＋</span>
+                    <span>
+                        <strong>Thêm đánh giá</strong>
+                        <small>Chia sẻ trải nghiệm mua đồ gỗ</small>
+                    </span>
+                </button>
+            }
+            else
+            {
+                <a class="review-bubble-btn" asp-controller="Account" asp-action="Login" asp-route-returnUrl="/Community">
+                    <span class="review-bubble-icon">＋</span>
+                    <span>
+                        <strong>Đăng nhập để đánh giá</strong>
+                        <small>Khách chưa đăng nhập vẫn đọc được tin tức</small>
+                    </span>
+                </a>
+            }
+        </div>
+
+        <div class="community-toolbar">
+            <form class="community-search" asp-controller="Community" asp-action="Index" method="get">
+                <input name="q" value="@searchText" placeholder="Tìm tin tức, sản phẩm hoặc bài đánh giá..." />
+                <input type="hidden" name="filter" value="@currentFilter" />
+                <button class="community-btn secondary" type="submit">Tìm kiếm</button>
+            </form>
+
+            <nav class="community-tabs">
+                <a class="community-tab @(currentFilter == "all" ? "active" : "")"
+                   asp-controller="Community"
+                   asp-action="Index"
+                   asp-route-filter="all"
+                   asp-route-q="@searchText">
+                    Tất cả
+                </a>
+
+                <a class="community-tab @(currentFilter == "reviews" ? "active" : "")"
+                   asp-controller="Community"
+                   asp-action="Index"
+                   asp-route-filter="reviews"
+                   asp-route-q="@searchText">
+                    Đánh giá khách hàng
+                </a>
+
+                <a class="community-tab @(currentFilter == "news" ? "active" : "")"
+                   asp-controller="Community"
+                   asp-action="Index"
+                   asp-route-filter="news"
+                   asp-route-q="@searchText">
+                    Tin tức mới
+                </a>
+            </nav>
+        </div>
+
+        @if (!Model.Items.Any())
+        {
+            <section class="community-card empty-state">
+                <strong>Chưa có nội dung phù hợp</strong>
+                <div>Hãy là người đầu tiên đăng bài đánh giá sản phẩm hoặc thử đổi bộ lọc.</div>
+            </section>
+        }
+
+        @foreach (var item in Model.Items)
+        {
+            <article class="community-card">
+                <div class="community-card-body">
+                    <div class="feed-header">
+                        <div class="feed-avatar">@AvatarLetter(item.AuthorName)</div>
+                        <div>
+                            <div class="feed-author">@item.AuthorName</div>
+                            <div class="feed-meta">
+                                @item.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")
+                                @if (!string.IsNullOrWhiteSpace(item.ProductName))
+                                {
+                                    <span> · @item.ProductName</span>
+                                }
+                            </div>
+                        </div>
+                    </div>
+
+                    <span class="feed-badge">@item.Badge</span>
+
+                    <h2 class="feed-title">@item.Title</h2>
+
+                    @if (item.Rating.HasValue)
+                    {
+                        <div class="feed-rating">@StarText(item.Rating)</div>
+                    }
+
+                    <div class="feed-content">@item.Content</div>
+
+                    @if (item.ImageUrls != null && item.ImageUrls.Any())
+                    {
+                        <div class="feed-images">
+                            @foreach (var image in item.ImageUrls.Take(4))
+                            {
+                                <img src="@image" alt="Ảnh đánh giá sản phẩm" />
+                            }
+                        </div>
+                    }
+
+                    @if (item.ItemType == "news" && !string.IsNullOrWhiteSpace(item.SourceUrl))
+                    {
+                        <div class="feed-actions">
+                            <a class="community-btn secondary" href="@item.SourceUrl" target="_blank" rel="noopener">
+                                Đọc bài gốc
+                            </a>
+                        </div>
+                    }
+                    else if (item.PostId.HasValue)
+                    {
+                        <div class="feed-actions">
+                            @if (Model.IsAuthenticated)
+                            {
+                                <form asp-controller="Community" asp-action="React" method="post">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="postId" value="@item.PostId" />
+                                    <button class="community-btn secondary" type="submit">
+                                        @(item.ReactedByCurrentUser ? "Đã yêu thích" : "Yêu thích") · @item.ReactionCount
+                                    </button>
+                                </form>
+                            }
+                            else
+                            {
+                                <span class="community-btn secondary">Yêu thích · @item.ReactionCount</span>
+                            }
+
+                            <span class="community-btn secondary">Bình luận · @item.CommentCount</span>
+
+                            @if (Model.IsAdmin)
+                            {
+                                <form asp-controller="Community" asp-action="HidePost" method="post" onsubmit="return confirm('Ẩn bài viết này?');">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="postId" value="@item.PostId" />
+                                    <button class="community-btn danger" type="submit">Ẩn bài</button>
+                                </form>
+                            }
+                        </div>
+
+                        @if (item.Comments != null && item.Comments.Any())
+                        {
+                            <div class="comment-list">
+                                @foreach (var comment in item.Comments)
+                                {
+                                    <div class="comment-item @(comment.ParentCommentId.HasValue ? "reply" : "")">
+                                        <div class="comment-author">@comment.AuthorName</div>
+                                        <div class="comment-content">@comment.Content</div>
+                                        <div class="feed-meta">@comment.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</div>
+
+                                        @if (Model.IsAdmin)
+                                        {
+                                            <form asp-controller="Community" asp-action="HideComment" method="post" style="margin-top:6px;">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="commentId" value="@comment.Id" />
+                                                <button class="community-btn danger" style="padding:7px 11px;font-size:12px;" type="submit">
+                                                    Ẩn bình luận
+                                                </button>
+                                            </form>
+                                        }
+                                    </div>
+                                }
+                            </div>
+                        }
+
+                        @if (Model.IsAuthenticated)
+                        {
+                            <form class="comment-form" asp-controller="Community" asp-action="Comment" method="post">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="postId" value="@item.PostId" />
+                                <input name="content" maxlength="1000" placeholder="Viết bình luận..." required />
+                                <button class="community-btn" type="submit">Gửi</button>
+                            </form>
+                        }
+                    }
+                </div>
+            </article>
+        }
+    </div>
+</div>
+
+@if (Model.IsAuthenticated)
+{
+    <div id="reviewModal" class="review-modal-overlay" aria-hidden="true">
+        <div class="review-modal-card" role="dialog" aria-modal="true" aria-labelledby="reviewModalTitle">
+            <div class="review-modal-header">
+                <div>
+                    <h2 id="reviewModalTitle">Đăng đánh giá sản phẩm</h2>
+                    <p>Chia sẻ cảm nhận thực tế của bạn với khách hàng khác.</p>
+                </div>
+
+                <button type="button" class="review-modal-close" id="closeReviewModalBtn" aria-label="Đóng">×</button>
+            </div>
+
+            <form asp-controller="Community" asp-action="PostReview" method="post" enctype="multipart/form-data">
+                @Html.AntiForgeryToken()
+
+                <div class="review-modal-row">
+                    <label>
+                        <span>Sản phẩm</span>
+                        <select name="productId" required @(Model.Products.Any() ? "" : "disabled")>
+    @if (Model.Products.Any())
+    {
+        <option value="">Chọn sản phẩm đã mua</option>
+        @foreach (var product in Model.Products)
+        {
+            <option value="@product.Id">@product.Name</option>
+        }
+    }
+    else
+    {
+        <option value="">Bạn chưa có sản phẩm đã mua để đánh giá</option>
+    }
+</select>
+                    </label>
+
+                    <label>
+                        <span>Số sao</span>
+                        <select name="rating" required>
+                            <option value="5">5 sao</option>
+                            <option value="4">4 sao</option>
+                            <option value="3">3 sao</option>
+                            <option value="2">2 sao</option>
+                            <option value="1">1 sao</option>
+                        </select>
+                    </label>
+                </div>
+
+                <label class="review-modal-field">
+                    <span>Tiêu đề</span>
+                    <input name="title" maxlength="255" placeholder="Ví dụ: Bàn gỗ rất chắc và đẹp" required />
+                </label>
+
+                <label class="review-modal-field">
+                    <span>Nội dung đánh giá</span>
+                    <textarea name="content" maxlength="2000" placeholder="Chia sẻ về chất lượng gỗ, màu sắc, giao hàng, tư vấn..." required></textarea>
+                </label>
+
+                <label class="review-modal-field">
+                    <span>Ảnh thực tế</span>
+                    <input type="file" name="images" multiple accept="image/png,image/jpeg,image/webp" />
+                </label>
+
+                <div class="review-modal-actions">
+                    <button type="button" class="community-btn secondary" id="cancelReviewModalBtn">Hủy</button>
+                    <button class="community-btn" type="submit" @(Model.Products.Any() ? "" : "disabled")>
+    Đăng đánh giá
+</button>
+                </div>
+            </form>
+        </div>
+    </div>
+}
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const modal = document.getElementById('reviewModal');
+        const openBtn = document.getElementById('openReviewModalBtn');
+        const closeBtn = document.getElementById('closeReviewModalBtn');
+        const cancelBtn = document.getElementById('cancelReviewModalBtn');
+
+        function openReviewModal() {
+            if (!modal) {
+                return;
+            }
+
+            modal.classList.add('show');
+            modal.setAttribute('aria-hidden', 'false');
+            document.body.classList.add('review-modal-open');
+
+            const firstInput = modal.querySelector('select, input, textarea, button');
+            if (firstInput) {
+                setTimeout(function () {
+                    firstInput.focus();
+                }, 80);
+            }
+        }
+
+        function closeReviewModal() {
+            if (!modal) {
+                return;
+            }
+
+            modal.classList.remove('show');
+            modal.setAttribute('aria-hidden', 'true');
+            document.body.classList.remove('review-modal-open');
+        }
+
+        if (openBtn) {
+            openBtn.addEventListener('click', openReviewModal);
+        }
+
+        if (closeBtn) {
+            closeBtn.addEventListener('click', closeReviewModal);
+        }
+
+        if (cancelBtn) {
+            cancelBtn.addEventListener('click', closeReviewModal);
+        }
+
+        if (modal) {
+            modal.addEventListener('click', function (event) {
+                if (event.target === modal) {
+                    closeReviewModal();
+                }
+            });
+        }
+
+        document.addEventListener('keydown', function (event) {
+            if (event.key === 'Escape') {
+                closeReviewModal();
+            }
+        });
+    });
+</script>
