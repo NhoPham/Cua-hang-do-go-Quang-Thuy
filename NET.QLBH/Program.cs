@@ -39,7 +39,6 @@ builder.Services.PostConfigure<ChatAssistantSettings>(options =>
     }
 });
 
-// Fallback tương thích cấu hình cũ: nếu còn để section AIChat thì vẫn đọc vào ChatAssistant.
 builder.Services.PostConfigure<ChatAssistantSettings>(options =>
 {
     var legacySection = builder.Configuration.GetSection("AIChat");
@@ -70,6 +69,8 @@ builder.Services.AddHttpClient<IChatAssistantService, ChatAssistantService>(clie
 {
     client.Timeout = TimeSpan.FromSeconds(45);
 });
+
+builder.Services.AddScoped<IEmailService, SmtpEmailService>();
 
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options =>
