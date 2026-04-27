@@ -17,6 +17,8 @@ public partial class Product
 
     public int Stock { get; set; }
 
+    public bool IsDeleted { get; set; } = false;
+
     public int? CategoryId { get; set; }
 
     public virtual Category? Category { get; set; }
